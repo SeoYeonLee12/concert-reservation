@@ -1,0 +1,31 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: concert-reservation-db
+    restart: always
+    ports:
+      - "127.0.0.1:${MYSQL_LOCAL_PORT}:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_volume:/var/lib/mysql
+
+  app:
+    depends_on:
+      - db
+    build: .
+    container_name: concert-reservation-app
+    ports:
+      - "${APP_LOCAL_PORT}:8080"
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY}
+
+volumes:
+  db_volume:
