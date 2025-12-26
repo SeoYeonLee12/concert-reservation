@@ -1,11 +1,11 @@
 spring:
-  application:
-    name: concert-reservation
-    profiles:
-      active: local
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
