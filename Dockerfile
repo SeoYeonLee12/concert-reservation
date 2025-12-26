@@ -1,4 +1,4 @@
-FROM bellsoft/liberica-openjdk:21
+FROM bellsoft/liberica-openjdk-alpine:21
 
 # 2. Argument: 빌드된 jar 파일의 경로 변수 설정
 ARG JAR_FILE=build/libs/*.jar
