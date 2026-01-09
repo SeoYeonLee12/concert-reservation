@@ -11,7 +11,8 @@ import org.springframework.http.HttpStatus;
 public enum UserErrorCode implements ErrorCode {
 
   INVALID_PASSWORD_ALGORITHM(HttpStatus.INTERNAL_SERVER_ERROR, "U1",
-      HASHED_ALGORITHM + "암호화 중 오류 발생");
+      HASHED_ALGORITHM + "암호화 중 오류 발생"),
+  DUPLICATED_EMAIL(HttpStatus.CONFLICT, "U2", "이미 가입된 이메일입니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
