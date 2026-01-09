@@ -1,5 +1,6 @@
 spring:
   application:
     name: concert-reservation
-    profiles:
-      active: local
+
+  profiles:
+    active: local
