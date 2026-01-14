@@ -41,3 +41,5 @@ docker-compose-local.yml
 
 # application.yml
 application-local.yml
+
+.editorconfig
