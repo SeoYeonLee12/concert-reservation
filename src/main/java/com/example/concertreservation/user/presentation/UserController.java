@@ -1,7 +1,7 @@
 package com.example.concertreservation.user.presentation;
 
 import com.example.concertreservation.user.application.UserService;
-import com.example.concertreservation.user.application.command.RegisterCommand;
+import com.example.concertreservation.user.application.command.UserSignupCommand;
 import com.example.concertreservation.user.presentation.dto.UserSignUpRequest;
 import com.example.concertreservation.user.presentation.dto.UserSignUpResponse;
 import jakarta.validation.Valid;
@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequiredArgsConstructor
 public class UserController {
 
-  private final UserService userService;
+    private final UserService userService;
 
-  @PostMapping("/signup")
-  public ResponseEntity<UserSignUpResponse> userSignUp(
-      @RequestBody @Valid UserSignUpRequest request) {
-    RegisterCommand command = request.toCommand();
-    Long signupUserId = userService.registerUser(command);
-    return ResponseEntity.status(HttpStatus.CREATED).body(new UserSignUpResponse(signupUserId));
+    @PostMapping("/signup")
+    public ResponseEntity<UserSignUpResponse> userSignUp(
+            @RequestBody @Valid UserSignUpRequest request) {
+        UserSignupCommand command = request.toCommand();
+        Long signupUserId = userService.registerUser(command);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new UserSignUpResponse(signupUserId));
 
-  }
+    }
 }
