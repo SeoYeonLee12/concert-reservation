@@ -21,4 +21,10 @@ public class UserService {
 
     }
 
+    public Long login(String username, String password) {
+        User user = userRepository.getByUserName(username);
+        user.login(password);
+        return user.getId();
+    }
+
 }

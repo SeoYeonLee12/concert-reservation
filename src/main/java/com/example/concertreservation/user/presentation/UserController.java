@@ -2,6 +2,8 @@ package com.example.concertreservation.user.presentation;
 
 import com.example.concertreservation.user.application.UserService;
 import com.example.concertreservation.user.application.command.UserSignupCommand;
+import com.example.concertreservation.user.presentation.dto.LoginRequest;
+import com.example.concertreservation.user.presentation.dto.UserLoginResponse;
 import com.example.concertreservation.user.presentation.dto.UserSignUpRequest;
 import com.example.concertreservation.user.presentation.dto.UserSignUpResponse;
 import jakarta.validation.Valid;
@@ -26,6 +28,11 @@ public class UserController {
         UserSignupCommand command = request.toCommand();
         Long signupUserId = userService.registerUser(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserSignUpResponse(signupUserId));
+    }
 
+    @PostMapping("/login")
+    public ResponseEntity<UserLoginResponse> login(@RequestBody LoginRequest request) {
+        Long userId = userService.login(request.email(), request.password());
+        return ResponseEntity.status(HttpStatus.OK).body(new UserLoginResponse(userId));
     }
 }
