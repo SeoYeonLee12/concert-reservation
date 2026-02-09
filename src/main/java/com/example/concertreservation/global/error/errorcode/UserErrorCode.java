@@ -1,10 +1,10 @@
 package com.example.concertreservation.global.error.errorcode;
 
+import static com.example.concertreservation.user.domain.Password.HASHED_ALGORITHM;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
-
-import static com.example.concertreservation.user.domain.Password.HASHED_ALGORITHM;
 
 @Getter
 @AllArgsConstructor

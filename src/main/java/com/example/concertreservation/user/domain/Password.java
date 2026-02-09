@@ -4,13 +4,12 @@ import com.example.concertreservation.global.error.errorcode.UserErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -30,10 +29,6 @@ public class Password {
         return new Password(hash(password));
     }
 
-    public boolean match(String plainPassword) {
-        return this.hashedPassword.equals(hash(plainPassword));
-    }
-
     private static String hash(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance(HASHED_ALGORITHM);
@@ -50,5 +45,9 @@ public class Password {
         } catch (NoSuchAlgorithmException e) {
             throw new GlobalException(UserErrorCode.INVALID_PASSWORD_ALGORITHM);
         }
+    }
+
+    public boolean match(String plainPassword) {
+        return this.hashedPassword.equals(hash(plainPassword));
     }
 }

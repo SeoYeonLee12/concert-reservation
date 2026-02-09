@@ -4,7 +4,6 @@ import com.example.concertreservation.user.application.command.UserSignupCommand
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.UniqueElements;
 
 public record UserSignUpRequest(
 
