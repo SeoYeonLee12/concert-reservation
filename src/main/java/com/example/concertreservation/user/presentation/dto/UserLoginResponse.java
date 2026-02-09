@@ -1,7 +1,9 @@
 package com.example.concertreservation.user.presentation.dto;
 
 public record UserLoginResponse(
-        Long userId
+        Long userId,
+        String accessToken
+
 ) {
 
 }
