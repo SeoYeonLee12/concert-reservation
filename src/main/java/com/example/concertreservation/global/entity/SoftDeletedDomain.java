@@ -12,7 +12,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @MappedSuperclass
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SoftDeletedDomain extends BaseEntity {
+public class SoftDeletedDomain extends BaseDomain {
 
-  private LocalDateTime deletedAt;
+    private LocalDateTime deletedAt;
 }
