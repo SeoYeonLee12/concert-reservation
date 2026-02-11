@@ -9,3 +9,8 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
+
+token:
+  secret-key: ${secretKey}
+  access-token-expiration-millis: ${accessTokenExpiration}
+  refresh-token-expiration-millis: ${refreshTokenExpiration}

@@ -12,9 +12,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsUserByEmail(String email);
 
-    default User getByUserName(String userName) {
-        return findByName(userName).orElseThrow(() -> new GlobalException(UserErrorCode.USER_NOT_FOUND));
+    default User getByEmail(String email) {
+        return findByEmail(email).orElseThrow(() -> new GlobalException(UserErrorCode.USER_NOT_FOUND));
     }
 
-    Optional<User> findByName(String userName);
+    Optional<User> findByEmail(String email);
 }
