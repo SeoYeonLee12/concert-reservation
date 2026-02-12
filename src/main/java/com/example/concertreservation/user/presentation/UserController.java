@@ -1,9 +1,9 @@
 package com.example.concertreservation.user.presentation;
 
-import com.example.concertreservation.auth.Token;
 import com.example.concertreservation.auth.TokenService;
 import com.example.concertreservation.user.application.UserService;
 import com.example.concertreservation.user.application.command.UserSignupCommand;
+import com.example.concertreservation.user.application.result.UserLoginResult;
 import com.example.concertreservation.user.presentation.dto.LoginRequest;
 import com.example.concertreservation.user.presentation.dto.UserLoginResponse;
 import com.example.concertreservation.user.presentation.dto.UserSignUpRequest;
@@ -35,9 +35,7 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<UserLoginResponse> login(@RequestBody LoginRequest request) {
-        Long userId = userService.login(request.email(), request.password());
-        Token token = tokenService.createToken(userId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new UserLoginResponse(userId, token.accessToken()));
+        UserLoginResult result = userService.login(request.email(), request.password());
+        return ResponseEntity.status(HttpStatus.OK).body(UserLoginResponse.from(result));
     }
 }
