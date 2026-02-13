@@ -8,6 +8,7 @@ import com.example.concertreservation.global.error.exception.GlobalException;
 import com.example.concertreservation.user.application.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final TokenProperty tokenProperty;
 
+    @Transactional
     public Token reissueToken(Long userId, String refreshToken) {
         String savedRefreshToken = redisService.getRefreshToken(userId);
         if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
