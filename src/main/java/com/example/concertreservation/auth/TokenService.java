@@ -32,11 +32,6 @@ public class TokenService {
         return new Token(accessToken, refreshToken);
     }
 
-    public Token reissueAccessToken(Long userId) {
-        String accessToken = createAccessToken(userId);
-        return new Token(accessToken);
-    }
-
     public Long extractUserId(String token) {
         try {
             return Jwts.parser()

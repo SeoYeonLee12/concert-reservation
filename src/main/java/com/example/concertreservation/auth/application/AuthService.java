@@ -22,7 +22,7 @@ public class AuthService {
         if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
             throw new GlobalException(TokenErrorCode.INVALID_TOKEN);
         }
-        Token newToken = tokenService.reissueAccessToken(userId);
+        Token newToken = tokenService.issueTokens(userId);
         redisService.save(userId, newToken.refreshToken(), tokenProperty.refreshTokenExpirationMillis());
         return newToken;
     }
