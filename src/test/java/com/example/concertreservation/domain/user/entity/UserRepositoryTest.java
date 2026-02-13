@@ -1,10 +1,6 @@
 package com.example.concertreservation.domain.user.entity;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import com.example.concertreservation.global.entity.BaseDomain;
+import com.example.concertreservation.global.domain.BaseDomain;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @Import({BaseDomain.class})
