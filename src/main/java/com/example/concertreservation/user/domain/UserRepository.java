@@ -10,6 +10,12 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    default User getUserById(Long id) {
+        return findUserById(id).orElseThrow(() -> new GlobalException(UserErrorCode.USER_NOT_FOUND));
+    }
+
+    Optional<User> findUserById(Long id);
+
     boolean existsUserByEmail(String email);
 
     default User getByEmail(String email) {

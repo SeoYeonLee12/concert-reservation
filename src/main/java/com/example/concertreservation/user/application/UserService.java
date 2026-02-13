@@ -4,6 +4,7 @@ import com.example.concertreservation.auth.Token;
 import com.example.concertreservation.auth.TokenProperty;
 import com.example.concertreservation.auth.TokenService;
 import com.example.concertreservation.user.application.command.UserSignupCommand;
+import com.example.concertreservation.user.application.result.UserInfoResult;
 import com.example.concertreservation.user.application.result.UserLoginResult;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
@@ -47,4 +48,8 @@ public class UserService {
         );
     }
 
+    public UserInfoResult getUser(Long userId) {
+        User user = userRepository.getUserById(userId);
+        return UserInfoResult.from(user);
+    }
 }
