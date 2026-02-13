@@ -29,4 +29,10 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(newToken);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Auth Long userId) {
+        authService.deleteToken(userId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
 }

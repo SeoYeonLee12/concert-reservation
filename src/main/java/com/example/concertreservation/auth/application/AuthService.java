@@ -26,4 +26,8 @@ public class AuthService {
         redisService.save(userId, newToken.refreshToken(), tokenProperty.refreshTokenExpirationMillis());
         return newToken;
     }
+
+    public void deleteToken(Long userId) {
+        redisService.delete(userId);
+    }
 }
