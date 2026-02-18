@@ -1,0 +1,28 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      
+token:
+  secret-key: c2lsdmVyLXN0YXJkdXN0LXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQtZ2VuZXJhdGVkLWJ5LXNlb3llb24
+  access-token-expiration-millis: 86400000
+  refresh-token-expiration-millis: 1209600000

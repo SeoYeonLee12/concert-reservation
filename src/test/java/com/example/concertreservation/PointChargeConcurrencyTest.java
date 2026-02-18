@@ -13,8 +13,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
+@ActiveProfiles("test")
 public class PointChargeConcurrencyTest {
 
     @Autowired
@@ -42,6 +44,8 @@ public class PointChargeConcurrencyTest {
             executorService.submit(() -> {
                 try {
                     userService.chargePoint(userId, 1000L);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 } finally {
                     // 카운트 감소
                     countDownLatch.countDown();
