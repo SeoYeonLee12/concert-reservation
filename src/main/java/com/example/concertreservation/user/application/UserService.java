@@ -26,7 +26,7 @@ public class UserService {
     public Long registerUser(UserSignupCommand command) {
         User registeredUser = command.toUser();
         userSignUp.saveUser(registeredUser);
-        return registeredUser.getId();
+        return registeredUser.getUserId();
     }
 
     @Transactional
@@ -34,15 +34,15 @@ public class UserService {
         User user = userRepository.getByEmail(email);
         user.login(password);
 
-        Token token = tokenService.issueTokens(user.getId());
+        Token token = tokenService.issueTokens(user.getUserId());
         redisService.save(
-                user.getId(),
+                user.getUserId(),
                 token.refreshToken(),
                 tokenProperty.refreshTokenExpirationMillis()
         );
 
         return new UserLoginResult(
-                user.getId(),
+                user.getUserId(),
                 token.accessToken(),
                 token.refreshToken()
         );

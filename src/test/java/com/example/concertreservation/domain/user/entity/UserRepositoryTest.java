@@ -1,5 +1,9 @@
 package com.example.concertreservation.domain.user.entity;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.example.concertreservation.global.domain.BaseDomain;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
@@ -8,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @Import({BaseDomain.class})
@@ -46,11 +48,11 @@ public class UserRepositoryTest {
 
         // when
         userRepository.save(testUser);
-        System.out.println("테스터1 id" + testUser.getId());
+        System.out.println("테스터1 id" + testUser.getUserId());
 
         // then
 //    assertTrue(userRepository.existsById(testUser.getId()), "해당 유저의 아이디가 존재함.");
-        User actualUser = userRepository.findById(testUser.getId()).orElseThrow();
+        User actualUser = userRepository.findById(testUser.getUserId()).orElseThrow();
         assertAll(
                 () -> assertEquals(testUser.getEmail(), actualUser.getEmail()),
                 () -> assertEquals(testUser.getPassword(), actualUser.getPassword()),
