@@ -55,5 +55,10 @@ public class User extends SoftDeletedDomain {
         }
     }
 
+    public void chargedPoint(Long addedPoint) {
+        if (addedPoint < 0) {
+            throw new GlobalException(UserErrorCode.INVALID_CHARGE_AMOUNT);
+        }
+        this.point += addedPoint;
+    }
 }
-

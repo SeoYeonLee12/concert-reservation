@@ -6,6 +6,7 @@ import com.example.concertreservation.auth.TokenService;
 import com.example.concertreservation.user.application.command.UserSignupCommand;
 import com.example.concertreservation.user.application.result.UserInfoResult;
 import com.example.concertreservation.user.application.result.UserLoginResult;
+import com.example.concertreservation.user.domain.PointCharge;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
 import com.example.concertreservation.user.domain.UserSignUp;
@@ -22,7 +23,9 @@ public class UserService {
     private final TokenService tokenService;
     private final RedisService redisService;
     private final TokenProperty tokenProperty;
+    private final PointCharge pointCharge;
 
+    // TODO 여기 개선
     public Long registerUser(UserSignupCommand command) {
         User registeredUser = command.toUser();
         userSignUp.saveUser(registeredUser);
@@ -51,5 +54,10 @@ public class UserService {
     public UserInfoResult getUser(Long userId) {
         User user = userRepository.getUserById(userId);
         return UserInfoResult.from(user);
+    }
+
+    public Long chargePoint(Long userId, Long addedPoint) {
+        User user = userRepository.getUserById(userId);
+        return pointCharge.chargedPoint(user, addedPoint);
     }
 }
