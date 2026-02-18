@@ -56,6 +56,7 @@ public class UserService {
         return UserInfoResult.from(user);
     }
 
+    @Transactional
     public Long chargePoint(Long userId, Long addedPoint) {
         User user = userRepository.getUserById(userId);
         return pointCharge.chargedPoint(user, addedPoint);
