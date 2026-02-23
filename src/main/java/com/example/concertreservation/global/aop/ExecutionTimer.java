@@ -27,7 +27,7 @@ public class ExecutionTimer {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String methodName = signature.getMethod().getName();
 
-        log.info("Execution Method: {}, Execution Time: {}", methodName, totalTimeMillis);
+        log.info("Execution Method: {}, Execution Time: {}ms", methodName, totalTimeMillis);
         return result;
     }
 

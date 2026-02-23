@@ -66,4 +66,44 @@ public class PointChargeConcurrencyTest {
 
         assertThat(actualPoint).isNotEqualTo(expectedPoint);
     }
+
+    @Test
+    @DisplayName("Synchronized 키워드를 활용한 동시성 제어 : 100명이 동시에 1000원 충전 -> 잔액이 100000원이 될까?")
+    public void chargePoint_concurrency_test_synchronzed_word() throws InterruptedException {
+        // Given
+        Long userId = userService.registerUser(new UserSignupCommand(
+                "test@test.com", "password", "Tester", "TestNick"
+        ));
+
+        // When
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+
+        CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    userService.chargePointSynchronizedFail(userId, 1000L);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
+        }
+        countDownLatch.await();
+
+        //Then
+        User user = userRepository.getUserById(userId);
+        long actualPoint = user.getPoint();
+        long expectedPoint = 1000L * threadCount; // 100000
+
+        System.out.println("==================================================");
+        System.out.println("기대 잔액: " + expectedPoint);
+        System.out.println("실제 잔액: " + actualPoint);
+        System.out.println("==================================================");
+
+        assertThat(actualPoint).isEqualTo(expectedPoint);
+    }
 }
