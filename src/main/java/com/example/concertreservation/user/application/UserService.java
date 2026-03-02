@@ -4,10 +4,11 @@ import com.example.concertreservation.auth.Token;
 import com.example.concertreservation.auth.TokenProperty;
 import com.example.concertreservation.auth.TokenService;
 import com.example.concertreservation.global.aop.ExecutionTime;
+import com.example.concertreservation.global.aop.retry.Retry;
 import com.example.concertreservation.user.application.command.UserSignupCommand;
 import com.example.concertreservation.user.application.result.UserInfoResult;
 import com.example.concertreservation.user.application.result.UserLoginResult;
-import com.example.concertreservation.user.domain.PointCharge;
+import com.example.concertreservation.user.domain.PointCharger;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
 import com.example.concertreservation.user.domain.UserSignUp;
@@ -28,13 +29,13 @@ public class UserService {
     private final TokenService tokenService;
     private final RedisService redisService;
     private final TokenProperty tokenProperty;
-    private final PointCharge pointCharge;
+    private final PointCharger pointCharge;
 
     // TODO 여기 개선
     public Long registerUser(UserSignupCommand command) {
         User registeredUser = command.toUser();
         userSignUp.saveUser(registeredUser);
-        return registeredUser.getUserId();
+        return registeredUser.getUsersId();
     }
 
     @Transactional
@@ -42,15 +43,15 @@ public class UserService {
         User user = userRepository.getByEmail(email);
         user.login(password);
 
-        Token token = tokenService.issueTokens(user.getUserId());
+        Token token = tokenService.issueTokens(user.getUsersId());
         redisService.save(
-                user.getUserId(),
+                user.getUsersId(),
                 token.refreshToken(),
                 tokenProperty.refreshTokenExpirationMillis()
         );
 
         return new UserLoginResult(
-                user.getUserId(),
+                user.getUsersId(),
                 token.accessToken(),
                 token.refreshToken()
         );
@@ -98,6 +99,36 @@ public class UserService {
                 });
 
         log.info("[{}] Lock 해제 !! 메서드 종료", threadName);
+        return result;
+    }
+
+    @Retry
+    @ExecutionTime
+    @Transactional
+    public Long chargedPointWithOptimisticLock(Long userId, Long addedPoint) {
+
+        String threadName = Thread.currentThread().getName();
+        log.info("[{}] 트랜잭션 진입", threadName);
+
+        User user = userRepository.findByWithOptimisticLock(userId);
+        log.info("[{}] 조회 완료 !! 현재 잔액: {}, 읽은 버전: {}",
+                threadName,
+                user.getPoint(),
+                user.getVersion()
+        );
+        Long result = pointCharge.chargedPointWithOptimisticLock(user, addedPoint);
+
+        log.info("[{}] 커밋 대기 중(메모리 연산은 완료됨)", threadName);
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+
+                    @Override
+                    public void afterCommit() {
+                        log.info("[{}] DB 커밋 완료", threadName);
+                    }
+                }
+        );
         return result;
     }
 }

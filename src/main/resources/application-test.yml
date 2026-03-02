@@ -12,16 +12,22 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
+        highlight_sql: true
         dialect: org.hibernate.dialect.H2Dialect
   data:
     redis:
       host: localhost
       port: 6379
-      
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+#    org.hibernate.orm.jdbc.bind: trace
+
 token:
   secret-key: c2lsdmVyLXN0YXJkdXN0LXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQtZ2VuZXJhdGVkLWJ5LXNlb3llb24
   access-token-expiration-millis: 86400000

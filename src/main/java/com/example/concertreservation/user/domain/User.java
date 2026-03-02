@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,7 @@ public class User extends SoftDeletedDomain {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "users_id")
-    private Long userId;
+    private Long usersId;
 
     @Column(name = "email", unique = true)
     private String email;
@@ -39,6 +40,9 @@ public class User extends SoftDeletedDomain {
 
     @Column(name = "point")
     private Long point;
+
+    @Version
+    private Integer version;
 
     public User(String email, String password, String name, String nickName) {
         this.email = email;
