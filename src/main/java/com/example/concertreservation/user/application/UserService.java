@@ -138,4 +138,10 @@ public class UserService {
         Long result = pointCharger.chargedPointWithPessimisticLock(user, addedPoint);
         return result;
     }
+
+    public Long findCurrentPoint(Long userId) {
+        return userRepository.findPointByUsersId(userId);
+    }
+
+    ㅔㅕ
 }

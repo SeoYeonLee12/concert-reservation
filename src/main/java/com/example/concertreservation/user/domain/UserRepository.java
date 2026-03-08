@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    
+    Long findPointByUsersId(Long userId);
 
     @Lock(value = LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM User u WHERE u.usersId= :userId ")
