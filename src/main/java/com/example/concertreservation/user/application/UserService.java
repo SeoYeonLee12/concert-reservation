@@ -29,9 +29,8 @@ public class UserService {
     private final TokenService tokenService;
     private final RedisService redisService;
     private final TokenProperty tokenProperty;
-    private final PointCharger pointCharge;
+    private final PointCharger pointCharger;
 
-    // TODO 여기 개선
     public Long registerUser(UserSignupCommand command) {
         User registeredUser = command.toUser();
         userSignUp.saveUser(registeredUser);
@@ -67,7 +66,7 @@ public class UserService {
     @Transactional
     public Long chargePoint(Long userId, Long addedPoint) {
         User user = userRepository.getUserById(userId);
-        return pointCharge.chargedPoint(user, addedPoint);
+        return pointCharger.chargedPoint(user, addedPoint);
     }
 
     // Transaction+Synchronized로 Lock 적용
@@ -82,7 +81,7 @@ public class UserService {
         String point = user.getPoint().toString();
         log.info("current my point:{} ", point);
 
-        Long result = pointCharge.chargedPoint2(user, addedPoint);
+        Long result = pointCharger.chargedPoint2(user, addedPoint);
         log.info("current my point:{} ", point);
 
         TransactionSynchronizationManager.registerSynchronization(
@@ -116,7 +115,7 @@ public class UserService {
                 user.getPoint(),
                 user.getVersion()
         );
-        Long result = pointCharge.chargedPointWithOptimisticLock(user, addedPoint);
+        Long result = pointCharger.chargedPointWithOptimisticLock(user, addedPoint);
 
         log.info("[{}] 커밋 대기 중(메모리 연산은 완료됨)", threadName);
 
@@ -129,6 +128,14 @@ public class UserService {
                     }
                 }
         );
+        return result;
+    }
+
+    // TODO 개선 필요
+    @Transactional
+    public Long chargedPointWithPessimisticLock(Long userId, Long addedPoint) {
+        User user = userRepository.findByUsersIdForUpdate(userId);
+        Long result = pointCharger.chargedPointWithPessimisticLock(user, addedPoint);
         return result;
     }
 }

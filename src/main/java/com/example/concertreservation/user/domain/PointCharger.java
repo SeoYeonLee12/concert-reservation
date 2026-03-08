@@ -38,4 +38,11 @@ public class PointCharger {
         return user.getUsersId();
     }
 
+    public Long chargedPointWithPessimisticLock(User user, Long addedPoint) {
+        user.chargedPoint(addedPoint);
+        Long currentPoint = user.getPoint() + addedPoint;
+        PointHistory newChargeHistory = PointHistory.chargeHistory(user, addedPoint, currentPoint);
+        pointHistoryRepository.save(newChargeHistory);
+        return user.getUsersId();
+    }
 }
