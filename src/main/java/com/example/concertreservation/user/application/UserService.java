@@ -5,13 +5,17 @@ import com.example.concertreservation.auth.TokenProperty;
 import com.example.concertreservation.auth.TokenService;
 import com.example.concertreservation.global.aop.ExecutionTime;
 import com.example.concertreservation.global.aop.retry.Retry;
+import com.example.concertreservation.pointHistory.domain.PointHistory;
+import com.example.concertreservation.pointHistory.domain.PointHistoryRepository;
 import com.example.concertreservation.user.application.command.UserSignupCommand;
+import com.example.concertreservation.user.application.result.PointHistoryResult;
 import com.example.concertreservation.user.application.result.UserInfoResult;
 import com.example.concertreservation.user.application.result.UserLoginResult;
 import com.example.concertreservation.user.domain.PointCharger;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
 import com.example.concertreservation.user.domain.UserSignUp;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +34,7 @@ public class UserService {
     private final RedisService redisService;
     private final TokenProperty tokenProperty;
     private final PointCharger pointCharger;
+    private final PointHistoryRepository pointHistoryRepository;
 
     public Long registerUser(UserSignupCommand command) {
         User registeredUser = command.toUser();
@@ -143,5 +148,12 @@ public class UserService {
         return userRepository.findPointByUsersId(userId);
     }
 
-    ㅔㅕ
+    @Transactional(readOnly = true)
+    public List<PointHistoryResult> findPointHistories(Long userId) {
+        User user = userRepository.getUserById(userId);
+        List<PointHistory> pointHistoryList = pointHistoryRepository.findAllByUser(user);
+        return pointHistoryList.stream()
+                .map(PointHistoryResult::from)
+                .toList();
+    }
 }
