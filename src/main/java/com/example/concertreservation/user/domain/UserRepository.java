@@ -11,16 +11,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
+
     Long findPointByUsersId(Long userId);
 
     @Lock(value = LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM User u WHERE u.usersId= :userId ")
     User findByUsersIdForUpdate(Long userId);
-
-    @Lock(value = LockModeType.OPTIMISTIC)
-    @Query("SELECT u FROM User u WHERE u.usersId= :userId ")
-    User findByWithOptimisticLock(Long userId);
 
     default User getUserById(Long id) {
         return findUserByUsersId(id).orElseThrow(
