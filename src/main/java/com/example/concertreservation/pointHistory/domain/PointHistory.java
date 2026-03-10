@@ -62,11 +62,11 @@ public class PointHistory extends SoftDeletedDomain {
         this.currentPoint = currentPoint;
     }
 
-    public PointHistory chargeHistory(User user, Long amount, Long currentPoint) {
+    public static PointHistory chargeHistory(User user, Long amount, Long currentPoint) {
         return new PointHistory(user, null, CollectType.CHARGE, amount, currentPoint);
     }
 
-    public PointHistory useHistory(
+    public static PointHistory useHistory(
             User user,
             Reservation reservation,
             Long amount,
@@ -75,7 +75,7 @@ public class PointHistory extends SoftDeletedDomain {
         return new PointHistory(user, reservation, CollectType.USE, amount, currentPoint);
     }
 
-    public PointHistory refundHistory(
+    public static PointHistory refundHistory(
             User user,
             Reservation reservation,
             Long amount,

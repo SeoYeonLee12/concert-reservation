@@ -48,11 +48,11 @@ public class UserRepositoryTest {
 
         // when
         userRepository.save(testUser);
-        System.out.println("테스터1 id" + testUser.getUserId());
+        System.out.println("테스터1 id" + testUser.getUsersId());
 
         // then
 //    assertTrue(userRepository.existsById(testUser.getId()), "해당 유저의 아이디가 존재함.");
-        User actualUser = userRepository.findById(testUser.getUserId()).orElseThrow();
+        User actualUser = userRepository.findById(testUser.getUsersId()).orElseThrow();
         assertAll(
                 () -> assertEquals(testUser.getEmail(), actualUser.getEmail()),
                 () -> assertEquals(testUser.getPassword(), actualUser.getPassword()),

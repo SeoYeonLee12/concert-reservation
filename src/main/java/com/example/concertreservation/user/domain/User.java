@@ -23,7 +23,7 @@ public class User extends SoftDeletedDomain {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "users_id")
-    private Long userId;
+    private Long usersId;
 
     @Column(name = "email", unique = true)
     private String email;
@@ -55,5 +55,10 @@ public class User extends SoftDeletedDomain {
         }
     }
 
+    public void chargedPoint(Long addedPoint) {
+        if (addedPoint < 0) {
+            throw new GlobalException(UserErrorCode.INVALID_CHARGE_AMOUNT);
+        }
+        this.point += addedPoint;
+    }
 }
-
