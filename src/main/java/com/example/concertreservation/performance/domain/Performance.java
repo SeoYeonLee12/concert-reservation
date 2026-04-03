@@ -1,12 +1,20 @@
 package com.example.concertreservation.performance.domain;
 
 import com.example.concertreservation.global.domain.SoftDeletedDomain;
+import com.example.concertreservation.performance.domain.enums.PerformanceStatus;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,6 +45,14 @@ public class Performance extends SoftDeletedDomain {
     @Column(name = "age_rating", nullable = false)
     private String ageRating;
 
+    @OrderBy("startTime ASC")
+    @OneToMany(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Schedule> schedules;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "performance_status")
+    private PerformanceStatus performanceStatus;
+
     public Performance(
             String performanceTitle,
             String performanceDescription,
@@ -49,5 +65,11 @@ public class Performance extends SoftDeletedDomain {
         this.posterImage = posterImage;
         this.runningTime = runningTime;
         this.ageRating = ageRating;
+        this.schedules = new ArrayList<>();
+    }
+
+    public void addSchedule(Schedule schedule) {
+        this.schedules.add(schedule);
+        schedule.addPerformance(this);
     }
 }

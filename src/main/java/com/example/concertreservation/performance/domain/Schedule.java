@@ -47,13 +47,17 @@ public class Schedule extends SoftDeletedDomain {
     @Column(name = "available_seats", nullable = false)
     private Integer availableSeats;
 
+    @Column(name = "end_datetime", nullable = false)
+    private LocalDateTime endTime;
+
     public Schedule(
             Performance performance,
             Place place,
             LocalDateTime startTime,
             LocalDateTime reservationStartAt,
             Integer totalSeats,
-            Integer availableSeats
+            Integer availableSeats,
+            LocalDateTime endTime
     ) {
         this.performance = performance;
         this.place = place;
@@ -61,5 +65,10 @@ public class Schedule extends SoftDeletedDomain {
         this.reservationStartAt = reservationStartAt;
         this.totalSeats = totalSeats;
         this.availableSeats = availableSeats;
+        this.endTime = endTime;
+    }
+
+    public void addPerformance(Performance performance) {
+        this.performance = performance;
     }
 }
