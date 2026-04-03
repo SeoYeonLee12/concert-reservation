@@ -53,12 +53,17 @@ public class Performance extends SoftDeletedDomain {
     @Column(name = "performance_status")
     private PerformanceStatus performanceStatus;
 
+    @Column(name = "performer", nullable = false)
+    private String performer;
+
     public Performance(
             String performanceTitle,
             String performanceDescription,
             String posterImage,
             Integer runningTime,
-            String ageRating
+            String ageRating,
+            String performer
+
     ) {
         this.performanceTitle = performanceTitle;
         this.performanceDescription = performanceDescription;
@@ -66,6 +71,8 @@ public class Performance extends SoftDeletedDomain {
         this.runningTime = runningTime;
         this.ageRating = ageRating;
         this.schedules = new ArrayList<>();
+        this.performanceStatus = PerformanceStatus.READY;
+        this.performer = performer;
     }
 
     public void addSchedule(Schedule schedule) {

@@ -1,6 +1,7 @@
 package com.example.concertreservation.performance.presentation;
 
 import com.example.concertreservation.performance.application.PerformanceService;
+import com.example.concertreservation.performance.application.result.PerformanceGetResult;
 import com.example.concertreservation.performance.application.result.PerformanceListResult;
 import com.example.concertreservation.performance.presentation.dto.PerformanceListResponse;
 import java.util.List;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -22,5 +24,11 @@ public class PerformanceController {
     public ResponseEntity<PerformanceListResponse> getPerformanceList() {
         List<PerformanceListResult> results = performanceService.findPerformanceList();
         return ResponseEntity.status(HttpStatus.OK).body(PerformanceListResponse.from(results));
+    }
+
+    @GetMapping("{performanceId}")
+    public ResponseEntity<PerformanceGetResponse> getPerformance(@PathVariable Long performanceId) {
+        PerformanceGetResult result = performanceService.findPerformanceById(performanceId);
+        return ResponseEntity.status(HttpStatus.OK).body(PerformanceGetResponse.from(result));
     }
 }

@@ -5,30 +5,36 @@ import com.example.concertreservation.performance.domain.Schedule;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record PerformanceListResult(
+public record PerformanceGetResult(
         Long performanceId,
         String performanceTitle,
+        String performanceDescription,
         String posterImage,
         String placeName,
         LocalDateTime scheduleStartTime,
         LocalDateTime scheduleEndTime,
-        String performanceStatus
+        String performanceStatus,
+        String performer,
+        String ageRating
 ) {
 
-    public static PerformanceListResult from(Performance performance) {
+    public static PerformanceGetResult from(Performance performance) {
         List<Schedule> schedules = performance.getSchedules();
 
         Schedule firstSchedule = schedules.getFirst();
         Schedule lastSchedule = schedules.getLast();
 
-        return new PerformanceListResult(
+        return new PerformanceGetResult(
                 performance.getPerformanceId(),
                 performance.getPerformanceTitle(),
+                performance.getPerformanceDescription(),
                 performance.getPosterImage(),
                 firstSchedule.getPlace().getPlaceName(),
                 firstSchedule.getStartTime(),
                 lastSchedule.getEndTime(),
-                performance.getPerformanceStatus().toString()
+                performance.getPerformanceStatus().toString(),
+                performance.getPerformer(),
+                performance.getAgeRating()
         );
     }
 }

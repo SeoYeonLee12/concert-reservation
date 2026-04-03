@@ -1,5 +1,6 @@
 package com.example.concertreservation.performance.application;
 
+import com.example.concertreservation.performance.application.result.PerformanceGetResult;
 import com.example.concertreservation.performance.application.result.PerformanceListResult;
 import com.example.concertreservation.performance.domain.Performance;
 import com.example.concertreservation.performance.domain.PerformanceRepository;
@@ -20,5 +21,10 @@ public class PerformanceService {
         return performances.stream()
                 .map(PerformanceListResult::from)
                 .toList();
+    }
+
+    public PerformanceGetResult findPerformanceById(Long performanceId) {
+        Performance performance = performanceRepository.getByPerformanceId(performanceId);
+        return PerformanceGetResult.from(performance);
     }
 }
