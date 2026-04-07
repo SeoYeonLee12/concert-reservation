@@ -1,4 +1,4 @@
-package com.example.concertreservation.performance.presentation;
+package com.example.concertreservation.performance.presentation.dto;
 
 import com.example.concertreservation.performance.application.result.PerformanceGetResult;
 import java.time.LocalDateTime;

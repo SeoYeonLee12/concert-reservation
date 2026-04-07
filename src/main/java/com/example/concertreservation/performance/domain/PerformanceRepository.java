@@ -13,7 +13,8 @@ public interface PerformanceRepository extends JpaRepository<Performance, Long> 
 
     @Query("SELECT DISTINCT p FROM Performance p " +
             "JOIN FETCH p.schedules s " +
-            "JOIN FETCH s.place")
+            "JOIN FETCH s.place " +
+            "ORDER BY p.performanceId DESC")
     List<Performance> findAllList();
 
     default Performance getByPerformanceId(Long performanceId) {

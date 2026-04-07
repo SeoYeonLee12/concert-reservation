@@ -2,8 +2,11 @@ package com.example.concertreservation.performance.application;
 
 import com.example.concertreservation.performance.application.result.PerformanceGetResult;
 import com.example.concertreservation.performance.application.result.PerformanceListResult;
+import com.example.concertreservation.performance.application.result.PerformanceScheduleListResult;
 import com.example.concertreservation.performance.domain.Performance;
 import com.example.concertreservation.performance.domain.PerformanceRepository;
+import com.example.concertreservation.performance.domain.Schedule;
+import com.example.concertreservation.performance.domain.ScheduleRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PerformanceService {
 
     private final PerformanceRepository performanceRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Transactional(readOnly = true)
     public List<PerformanceListResult> findPerformanceList() {
@@ -26,5 +30,13 @@ public class PerformanceService {
     public PerformanceGetResult findPerformanceById(Long performanceId) {
         Performance performance = performanceRepository.getByPerformanceId(performanceId);
         return PerformanceGetResult.from(performance);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PerformanceScheduleListResult> findPerformanceScheduleList(Long performanceId) {
+        List<Schedule> schedules = scheduleRepository.getAllByPerformanceId(performanceId);
+        return schedules.stream()
+                .map(PerformanceScheduleListResult::from)
+                .toList();
     }
 }

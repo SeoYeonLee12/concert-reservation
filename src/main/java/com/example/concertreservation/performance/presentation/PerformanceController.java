@@ -3,7 +3,10 @@ package com.example.concertreservation.performance.presentation;
 import com.example.concertreservation.performance.application.PerformanceService;
 import com.example.concertreservation.performance.application.result.PerformanceGetResult;
 import com.example.concertreservation.performance.application.result.PerformanceListResult;
+import com.example.concertreservation.performance.application.result.PerformanceScheduleListResult;
+import com.example.concertreservation.performance.presentation.dto.PerformanceGetResponse;
 import com.example.concertreservation.performance.presentation.dto.PerformanceListResponse;
+import com.example.concertreservation.performance.presentation.dto.PerformanceScheduleListResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,5 +33,16 @@ public class PerformanceController {
     public ResponseEntity<PerformanceGetResponse> getPerformance(@PathVariable Long performanceId) {
         PerformanceGetResult result = performanceService.findPerformanceById(performanceId);
         return ResponseEntity.status(HttpStatus.OK).body(PerformanceGetResponse.from(result));
+    }
+
+    @GetMapping("/{performanceId}/schedules")
+    public ResponseEntity<PerformanceScheduleListResponse> getPerformanceSchedules(
+            @PathVariable Long performanceId) {
+        List<PerformanceScheduleListResult> result =
+                performanceService.findPerformanceScheduleList(performanceId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(PerformanceScheduleListResponse.from(result));
     }
 }
