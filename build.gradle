@@ -46,6 +46,10 @@ dependencies {
     //spring-retry 관련 의존성
     implementation 'org.springframework.retry:spring-retry'
     implementation 'org.springframework:spring-aspects'
+    // actuator 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // prometheus 관련 의존성
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

@@ -37,7 +37,8 @@ public class PerformanceController {
 
     @GetMapping("/{performanceId}/schedules")
     public ResponseEntity<PerformanceScheduleListResponse> getPerformanceSchedules(
-            @PathVariable Long performanceId) {
+            @PathVariable Long performanceId
+    ) {
         List<PerformanceScheduleListResult> result =
                 performanceService.findPerformanceScheduleList(performanceId);
 

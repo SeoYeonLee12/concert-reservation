@@ -1,0 +1,32 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: concert-reservation-prometheus-server
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./test/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --web.enable-remote-write-receiver # k6 데이터 수신 허용
+      - --enable-feature=native-histograms # k6 대시보드용 히스토그램 허용
+      - --config.file=/etc/prometheus/prometheus.yml
+    networks:
+      - monitor-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: concert-reservation-grafana-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./test/grafana-provisioning:/etc/grafana/provisioning
+      - ./test/grafana-dashboard:/dashboard # 대시보드 JSON 마운트
+    depends_on:
+      - prometheus
+    networks:
+      - monitor-net
+
+networks:
+  monitor-net:
+    name: monitor-net
+    driver: bridge
