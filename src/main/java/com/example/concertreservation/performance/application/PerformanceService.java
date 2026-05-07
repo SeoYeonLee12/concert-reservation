@@ -9,7 +9,7 @@ import com.example.concertreservation.performance.domain.Schedule;
 import com.example.concertreservation.performance.domain.ScheduleRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +19,8 @@ public class PerformanceService {
 
     private final PerformanceRepository performanceRepository;
     private final ScheduleRepository scheduleRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
 
+    @Cacheable(cacheNames = "performanceList")
     @Transactional(readOnly = true)
     public List<PerformanceListResult> findPerformanceList() {
         List<Performance> performances = performanceRepository.findAllList();
@@ -29,11 +29,14 @@ public class PerformanceService {
                 .toList();
     }
 
+    @Cacheable(cacheNames = "performanceDetail", key = "#performanceId")
+    @Transactional(readOnly = true)
     public PerformanceGetResult findPerformanceById(Long performanceId) {
         Performance performance = performanceRepository.getByPerformanceId(performanceId);
         return PerformanceGetResult.from(performance);
     }
 
+    @Cacheable(cacheNames = "performanceSchedules", key = "#performanceId")
     @Transactional(readOnly = true)
     public List<PerformanceScheduleListResult> findPerformanceScheduleList(Long performanceId) {
         List<Schedule> schedules = scheduleRepository.getAllByPerformanceId(performanceId);
