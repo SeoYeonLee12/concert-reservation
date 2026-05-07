@@ -5,7 +5,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./test/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
     command:
       - --web.enable-remote-write-receiver # k6 데이터 수신 허용
       - --enable-feature=native-histograms # k6 대시보드용 히스토그램 허용
@@ -19,12 +19,25 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./test/grafana-provisioning:/etc/grafana/provisioning
-      - ./test/grafana-dashboard:/dashboard # 대시보드 JSON 마운트
+      - ./grafana-provisioning:/etc/grafana/provisioning
+      - ./grafana-dashboard:/dashboard # 대시보드 JSON 마운트
     depends_on:
       - prometheus
     networks:
       - monitor-net
+
+  k6:
+    image: grafana/k6:latest
+    container_name: concert-reservation-k6
+    volumes:
+      - ./k6-scripts:/scripts
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),min,max,avg
+    networks:
+      - monitor-net
+    depends_on:
+      - prometheus
 
 networks:
   monitor-net:
