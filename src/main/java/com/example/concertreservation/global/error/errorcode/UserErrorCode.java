@@ -16,6 +16,8 @@ public enum UserErrorCode implements ErrorCode {
     INVALID_USERNAME_PASSWORD(HttpStatus.UNAUTHORIZED, "U003", "잘못된 아이디 혹은 비밀번호 입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U004", "존재하지 않는 유저입니다."),
     INVALID_CHARGE_AMOUNT(HttpStatus.BAD_REQUEST, "U005", "충전 금액은 0보다 커야합니다."),
+    INSUFFICIENT_POINT(HttpStatus.BAD_REQUEST, "U006", "보유 포인트가 부족합니다"),
+    INVALID_DEDUCT_AMOUNT(HttpStatus.BAD_REQUEST, "U007", "차감 금액은 0 이상이어야 합니다"),
     ;
 
     private final HttpStatus httpStatus;

@@ -63,4 +63,14 @@ public class User extends SoftDeletedDomain {
         }
         this.point += addedPoint;
     }
+
+    public void deductPoint(Long amount) {
+        if (amount < 0) {
+            throw new GlobalException(UserErrorCode.INVALID_DEDUCT_AMOUNT);
+        }
+        if (this.point < amount) {
+            throw new GlobalException(UserErrorCode.INSUFFICIENT_POINT);
+        }
+        this.point -= amount;
+    }
 }
