@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
+@SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "performance_seat")
 @Getter
