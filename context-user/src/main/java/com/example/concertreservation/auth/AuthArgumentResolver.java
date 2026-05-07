@@ -1,6 +1,7 @@
 package com.example.concertreservation.auth;
 
 import com.example.concertreservation.global.error.exception.GlobalException;
+import com.example.concertreservation.user.application.RedisService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
@@ -16,6 +17,7 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
 
     private final TokenService tokenService;
     private final BearerTokenExtractor bearerTokenExtractor;
+    private final RedisService redisService;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -32,6 +34,10 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
     ) {
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
         String token = extractToken(request);
+        String jti = tokenService.extractJti(token);
+        if (redisService.isBlacklisted(jti)) {
+            throw new GlobalException(TokenErrorCode.BLACKLISTED_TOKEN);
+        }
         return tokenService.extractUserId(token);
     }
 

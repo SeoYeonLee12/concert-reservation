@@ -29,7 +29,12 @@ public class AuthService {
         return newToken;
     }
 
-    public void deleteToken(Long userId) {
+    public void logout(Long userId, String accessToken) {
+        String jti = tokenService.extractJti(accessToken);
+        long remainingMs = tokenService.remainingTtlMillis(accessToken);
+        if (remainingMs > 0) {
+            redisService.blacklistAccessToken(jti, remainingMs);
+        }
         redisService.delete(userId);
     }
 }

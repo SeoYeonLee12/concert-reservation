@@ -1,6 +1,7 @@
 package com.example.concertreservation.auth;
 
 import com.example.concertreservation.global.error.exception.GlobalException;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class TokenService {
@@ -33,13 +35,26 @@ public class TokenService {
     }
 
     public Long extractUserId(String token) {
+        return parseClaims(token).get(USER_ID_CLAIM, Long.class);
+    }
+
+    public String extractJti(String token) {
+        return parseClaims(token).getId();
+    }
+
+    public long remainingTtlMillis(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        long remaining = expiration.getTime() - System.currentTimeMillis();
+        return Math.max(remaining, 0L);
+    }
+
+    private Claims parseClaims(String token) {
         try {
             return Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token)
-                    .getPayload()
-                    .get(USER_ID_CLAIM, Long.class);
+                    .getPayload();
         } catch (ExpiredJwtException e) {
             throw new GlobalException(TokenErrorCode.EXPIRED_TOKEN);
         } catch (MalformedJwtException e) {
@@ -51,6 +66,7 @@ public class TokenService {
 
     private String createAccessToken(Long userId) {
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .claim(USER_ID_CLAIM, userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMillis))
@@ -60,6 +76,7 @@ public class TokenService {
 
     private String createRefreshToken(Long userId) {
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .claim(USER_ID_CLAIM, userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMillis))

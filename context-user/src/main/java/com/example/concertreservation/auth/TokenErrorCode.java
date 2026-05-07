@@ -13,6 +13,7 @@ public enum TokenErrorCode implements ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "TE002", "올바르지 않은 토큰 형식입니다."),
     UNKNOWN_TOKEN(HttpStatus.INTERNAL_SERVER_ERROR, "TE003", "예기치 못한 토큰 에러가 발생했습니다."),
     REQUIRED_BEARER_TOKEN(HttpStatus.UNAUTHORIZED, "TE004", "Bearer 토큰 예외가 발생했습니다."),
+    BLACKLISTED_TOKEN(HttpStatus.UNAUTHORIZED, "TE005", "이미 로그아웃된 토큰입니다."),
     ;
 
     private final HttpStatus httpStatus;

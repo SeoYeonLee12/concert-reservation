@@ -81,4 +81,11 @@ public class UserService {
                 .map(PointHistoryResult::from)
                 .toList();
     }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.getUserById(userId);
+        user.softDelete();
+        redisService.delete(userId);
+    }
 }

@@ -16,4 +16,8 @@ import java.time.LocalDateTime;
 public class SoftDeletedDomain extends BaseDomain {
 
     private LocalDateTime deletedAt;
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

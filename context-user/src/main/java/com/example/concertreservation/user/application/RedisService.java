@@ -28,4 +28,12 @@ public class RedisService {
     public void delete(Long userId) {
         stringRedisTemplate.delete(REDIS_KEY_PREFIX + userId);
     }
+
+    public void blacklistAccessToken(String jti, long ttlMillis) {
+        stringRedisTemplate.opsForValue().set("BL:" + jti, "1", Duration.ofMillis(ttlMillis));
+    }
+
+    public boolean isBlacklisted(String jti) {
+        return Boolean.TRUE.equals(stringRedisTemplate.hasKey("BL:" + jti));
+    }
 }
