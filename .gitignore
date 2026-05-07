@@ -43,3 +43,6 @@ docker-compose-local.yml
 application-local.yml
 
 .editorconfig
+
+# k6 summary results (per-run artifacts)
+test/k6-scripts/summary-*.json
