@@ -1,6 +1,8 @@
 package com.example.concertreservation.reservation.domain;
 
 import com.example.concertreservation.global.domain.SoftDeletedDomain;
+import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
+import com.example.concertreservation.global.error.exception.GlobalException;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeat;
 import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
 import com.example.concertreservation.user.domain.User;
@@ -57,5 +59,26 @@ public class Reservation extends SoftDeletedDomain {
         this.performanceSeat = performanceSeat;
         this.reservationStatus = reservationStatus;
         this.price = price;
+    }
+
+    public void confirm() {
+        if (this.reservationStatus != ReservationStatus.PENDING) {
+            throw new GlobalException(ReservationErrorCode.NOT_PENDING);
+        }
+        this.reservationStatus = ReservationStatus.CONFIRMED;
+    }
+
+    public void cancel() {
+        if (this.reservationStatus != ReservationStatus.CONFIRMED) {
+            throw new GlobalException(ReservationErrorCode.NOT_CONFIRMED);
+        }
+        this.reservationStatus = ReservationStatus.CANCELLED;
+    }
+
+    public Long refundAmount() {
+        if (this.reservationStatus != ReservationStatus.CANCELLED) {
+            throw new GlobalException(ReservationErrorCode.NOT_CANCELLED);
+        }
+        return (long) price;
     }
 }
