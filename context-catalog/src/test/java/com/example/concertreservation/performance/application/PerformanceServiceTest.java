@@ -20,6 +20,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class PerformanceServiceTest {
@@ -37,13 +41,16 @@ class PerformanceServiceTest {
     // findPerformanceList
     // -------------------------------------------------------------------------
 
+    private static final Pageable DEFAULT_PAGEABLE = PageRequest.of(0, 20);
+
     @Test
-    void 공연_목록_조회시_저장소가_빈_리스트를_반환하면_빈_결과를_반환한다() {
+    void 공연_목록_조회시_저장소가_빈_페이지를_반환하면_빈_결과를_반환한다() {
         // given
-        when(performanceRepository.findAllList()).thenReturn(List.of());
+        when(performanceRepository.findAllList(DEFAULT_PAGEABLE))
+                .thenReturn(new PageImpl<>(List.of()));
 
         // when
-        List<PerformanceListResult> result = performanceService.findPerformanceList();
+        List<PerformanceListResult> result = performanceService.findPerformanceList(DEFAULT_PAGEABLE);
 
         // then
         assertThat(result).isEmpty();
@@ -54,10 +61,11 @@ class PerformanceServiceTest {
         // given
         Performance performance1 = createPerformance("공연1", "설명1", "poster1.jpg", 120, "15세", "가수1");
         Performance performance2 = createPerformance("공연2", "설명2", "poster2.jpg", 90, "전체", "가수2");
-        when(performanceRepository.findAllList()).thenReturn(List.of(performance1, performance2));
+        when(performanceRepository.findAllList(DEFAULT_PAGEABLE))
+                .thenReturn(new PageImpl<>(List.of(performance1, performance2)));
 
         // when
-        List<PerformanceListResult> result = performanceService.findPerformanceList();
+        List<PerformanceListResult> result = performanceService.findPerformanceList(DEFAULT_PAGEABLE);
 
         // then
         assertThat(result).hasSize(2);
@@ -71,10 +79,11 @@ class PerformanceServiceTest {
         LocalDateTime start = LocalDateTime.of(2026, 6, 1, 19, 0);
         LocalDateTime end = LocalDateTime.of(2026, 6, 1, 21, 0);
         Performance performance = createPerformanceWithSchedule("콘서트", "poster.jpg", "올림픽홀", start, end);
-        when(performanceRepository.findAllList()).thenReturn(List.of(performance));
+        when(performanceRepository.findAllList(DEFAULT_PAGEABLE))
+                .thenReturn(new PageImpl<>(List.of(performance)));
 
         // when
-        List<PerformanceListResult> result = performanceService.findPerformanceList();
+        List<PerformanceListResult> result = performanceService.findPerformanceList(DEFAULT_PAGEABLE);
 
         // then
         PerformanceListResult item = result.get(0);
@@ -163,11 +172,12 @@ class PerformanceServiceTest {
     @Test
     void findPerformanceList_메서드에_cacheNames_performanceList로_Cacheable이_선언되어_있다()
             throws NoSuchMethodException {
-        Method method = PerformanceService.class.getMethod("findPerformanceList");
+        Method method = PerformanceService.class.getMethod("findPerformanceList", Pageable.class);
         Cacheable cacheable = method.getAnnotation(Cacheable.class);
 
         assertThat(cacheable).isNotNull();
         assertThat(cacheable.cacheNames()).containsExactly("performanceList");
+        assertThat(cacheable.key()).isEqualTo("#pageable.pageNumber + '-' + #pageable.pageSize");
     }
 
     @Test

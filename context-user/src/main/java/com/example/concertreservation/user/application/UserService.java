@@ -3,7 +3,6 @@ package com.example.concertreservation.user.application;
 import com.example.concertreservation.auth.Token;
 import com.example.concertreservation.auth.TokenProperty;
 import com.example.concertreservation.auth.TokenService;
-import com.example.concertreservation.pointHistory.domain.PointHistory;
 import com.example.concertreservation.pointHistory.domain.PointHistoryRepository;
 import com.example.concertreservation.user.application.command.UserSignupCommand;
 import com.example.concertreservation.user.application.result.PointHistoryResult;
@@ -16,6 +15,7 @@ import com.example.concertreservation.user.domain.UserSignUp;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,10 +73,11 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<PointHistoryResult> findPointHistories(Long userId) {
+    public List<PointHistoryResult> findPointHistories(Long userId, Pageable pageable) {
         User user = userRepository.getUserById(userId);
-        List<PointHistory> pointHistoryList = pointHistoryRepository.findAllByUser(user);
-        return pointHistoryList.stream()
+        return pointHistoryRepository.findAllByUser(user, pageable)
+                .getContent()
+                .stream()
                 .map(PointHistoryResult::from)
                 .toList();
     }

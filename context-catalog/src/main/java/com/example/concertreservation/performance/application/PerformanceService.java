@@ -10,6 +10,8 @@ import com.example.concertreservation.performance.domain.ScheduleRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,11 +22,12 @@ public class PerformanceService {
     private final PerformanceRepository performanceRepository;
     private final ScheduleRepository scheduleRepository;
 
-    @Cacheable(cacheNames = "performanceList")
+    @Cacheable(cacheNames = "performanceList",
+               key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     @Transactional(readOnly = true)
-    public List<PerformanceListResult> findPerformanceList() {
-        List<Performance> performances = performanceRepository.findAllList();
-        return performances.stream()
+    public List<PerformanceListResult> findPerformanceList(Pageable pageable) {
+        Page<Performance> page = performanceRepository.findAllList(pageable);
+        return page.getContent().stream()
                 .map(PerformanceListResult::from)
                 .toList();
     }

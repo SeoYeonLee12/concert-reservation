@@ -9,6 +9,9 @@ import com.example.concertreservation.user.presentation.dto.PointHistoryListResp
 import com.example.concertreservation.user.presentation.dto.UserPointResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -40,8 +43,12 @@ public class PointController {
     }
 
     @GetMapping("/history")
-    ResponseEntity<PointHistoryListResponse> getPointHistory(@Auth Long userId) {
-        List<PointHistoryResult> results = userService.findPointHistories(userId);
+    ResponseEntity<PointHistoryListResponse> getPointHistory(
+            @Auth Long userId,
+            @PageableDefault(size = 20, sort = "pointHistoryId", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        List<PointHistoryResult> results = userService.findPointHistories(userId, pageable);
         PointHistoryListResponse response = PointHistoryListResponse.from(results);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

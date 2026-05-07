@@ -9,6 +9,9 @@ import com.example.concertreservation.performance.presentation.dto.PerformanceLi
 import com.example.concertreservation.performance.presentation.dto.PerformanceScheduleListResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -24,8 +27,11 @@ public class PerformanceController {
     private final PerformanceService performanceService;
 
     @GetMapping
-    public ResponseEntity<PerformanceListResponse> getPerformanceList() {
-        List<PerformanceListResult> results = performanceService.findPerformanceList();
+    public ResponseEntity<PerformanceListResponse> getPerformanceList(
+            @PageableDefault(size = 20, sort = "performanceId", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        List<PerformanceListResult> results = performanceService.findPerformanceList(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(PerformanceListResponse.from(results));
     }
 

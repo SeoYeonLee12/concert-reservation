@@ -18,6 +18,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 @SQLRestriction("deleted_at IS NULL")
@@ -47,6 +48,7 @@ public class Performance extends SoftDeletedDomain {
     @Column(name = "age_rating", nullable = false)
     private String ageRating;
 
+    @BatchSize(size = 50)
     @OrderBy("startTime ASC")
     @OneToMany(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Schedule> schedules;
