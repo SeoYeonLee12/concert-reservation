@@ -1,0 +1,17 @@
+// :app — Spring Boot 부팅 모듈, application.yml + 통합 테스트
+
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation project(':common')
+    implementation project(':context-user')
+    implementation project(':context-catalog')
+    implementation project(':context-reservation')
+
+    // 런타임 전용 (구체 driver/registry는 :app에)
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    testRuntimeOnly 'com.h2database:h2'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+}

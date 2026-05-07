@@ -1,0 +1,5 @@
+// :context-user — User + Auth 도메인
+
+dependencies {
+    implementation project(':common')
+}

@@ -1,0 +1,5 @@
+// :context-catalog — Performance + Place + PerformanceSeat 도메인
+
+dependencies {
+    implementation project(':common')
+}
