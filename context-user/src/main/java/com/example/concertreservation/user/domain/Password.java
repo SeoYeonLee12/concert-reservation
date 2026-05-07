@@ -10,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -18,7 +19,9 @@ public class Password {
 
     public static final String HASHED_ALGORITHM = "sha-256";
 
-    @Column(name = "password", nullable = false)
+    private static final BCryptPasswordEncoder BCRYPT = new BCryptPasswordEncoder(12);
+
+    @Column(name = "password", nullable = false, length = 100)
     private String hashedPassword;
 
     private Password(String hashedPassword) {
@@ -26,28 +29,42 @@ public class Password {
     }
 
     public static Password hashPassword(String password) {
-        return new Password(hash(password));
+        return new Password(BCRYPT.encode(password));
     }
 
-    private static String hash(String password) {
+    public boolean match(String plainPassword) {
+        if (isBcryptHash()) {
+            return BCRYPT.matches(plainPassword, this.hashedPassword);
+        }
+        return this.hashedPassword.equals(sha256(plainPassword));
+    }
+
+    public boolean isLegacyHash() {
+        return !isBcryptHash();
+    }
+
+    public Password upgradeToHashed(String plainPassword) {
+        return new Password(BCRYPT.encode(plainPassword));
+    }
+
+    private boolean isBcryptHash() {
+        return this.hashedPassword != null
+                && (this.hashedPassword.startsWith("$2a$")
+                || this.hashedPassword.startsWith("$2b$")
+                || this.hashedPassword.startsWith("$2y$"));
+    }
+
+    private static String sha256(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance(HASHED_ALGORITHM);
-            // 바이트 배열에 저장
             byte[] bytes = md.digest(password.getBytes(StandardCharsets.UTF_8));
-
             StringBuilder hexStr = new StringBuilder();
-            // byte to 16
             for (byte b : bytes) {
                 hexStr.append(String.format("%02x", b));
             }
             return hexStr.toString();
-
         } catch (NoSuchAlgorithmException e) {
             throw new GlobalException(UserErrorCode.INVALID_PASSWORD_ALGORITHM);
         }
-    }
-
-    public boolean match(String plainPassword) {
-        return this.hashedPassword.equals(hash(plainPassword));
     }
 }

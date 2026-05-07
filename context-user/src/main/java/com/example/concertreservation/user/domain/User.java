@@ -55,6 +55,10 @@ public class User extends SoftDeletedDomain {
         if (!same) {
             throw new GlobalException(UserErrorCode.INVALID_USERNAME_PASSWORD);
         }
+        // 점진 마이그레이션: legacy SHA-256이면 BCrypt로 재해시
+        if (this.password.isLegacyHash()) {
+            this.password = this.password.upgradeToHashed(plainTextPassword);
+        }
     }
 
     public void chargedPoint(Long addedPoint) {

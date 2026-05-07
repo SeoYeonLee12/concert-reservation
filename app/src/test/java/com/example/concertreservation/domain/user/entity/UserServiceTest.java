@@ -62,8 +62,12 @@ public class UserServiceTest {
         // then
         verify(userSignUp).saveUser(userCaptor.capture());
         User newUser = userCaptor.getValue();
-        assertThat(newUser.getPassword().getHashedPassword().length()).isEqualTo(64);
-        System.out.println("암호화된 비밀번호: " + newUser.getPassword().getHashedPassword());
+        // BCrypt 해시 형식 검증: $2a$, $2b$, $2y$ prefix + 60자 길이
+        String hashed = newUser.getPassword().getHashedPassword();
+        assertThat(hashed).startsWith("$2");
+        assertThat(hashed).hasSize(60);
+        // 평문이 그대로 저장되지 않음을 확인 (회귀 방지)
+        assertThat(hashed).isNotEqualTo("password123");
     }
 
 

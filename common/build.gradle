@@ -16,6 +16,9 @@ dependencies {
     api 'org.springframework.retry:spring-retry'
     api 'org.springframework:spring-aspects'
 
+    // BCrypt 비밀번호 해시 (Password 도메인)
+    api 'org.springframework.security:spring-security-crypto'
+
     // JWT (auth가 사용)
     api 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
