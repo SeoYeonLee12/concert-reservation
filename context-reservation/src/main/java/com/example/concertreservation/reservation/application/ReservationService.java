@@ -7,7 +7,6 @@ import com.example.concertreservation.performanceseat.domain.PerformanceSeatRepo
 import com.example.concertreservation.reservation.domain.Reservation;
 import com.example.concertreservation.reservation.domain.ReservationRepository;
 import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
-import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -47,13 +46,14 @@ public class ReservationService {
                 throw new GlobalException(ReservationErrorCode.SEAT_LOCK_TIMEOUT);
             }
 
-            User user = userRepository.getUserById(userId);
+            // 사용자 존재 검증만 수행 (cross-context entity는 보유하지 않음)
+            userRepository.getUserById(userId);
             PerformanceSeat seat = performanceSeatRepository.getByPerformanceSeatId(performanceSeatId);
 
             seat.tryReserve(LocalDateTime.now());
 
             Reservation reservation = new Reservation(
-                    user, seat, ReservationStatus.PENDING, seat.getPrice());
+                    userId, performanceSeatId, ReservationStatus.PENDING, seat.getPrice());
             reservationRepository.save(reservation);
 
             return reservation.getReservationId();

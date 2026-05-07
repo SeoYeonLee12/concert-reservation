@@ -3,19 +3,14 @@ package com.example.concertreservation.reservation.domain;
 import com.example.concertreservation.global.domain.SoftDeletedDomain;
 import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
-import com.example.concertreservation.performanceseat.domain.PerformanceSeat;
 import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
-import com.example.concertreservation.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -34,13 +29,11 @@ public class Reservation extends SoftDeletedDomain {
     @Column(name = "reservation_id")
     private Long reservationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "users_id", nullable = false)
-    private User user;
+    @Column(name = "users_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "performance_seat_id", nullable = false)
-    private PerformanceSeat performanceSeat;
+    @Column(name = "performance_seat_id", nullable = false)
+    private Long performanceSeatId;
 
     @Enumerated(value = EnumType.STRING)
     @Column(name = "status")
@@ -50,13 +43,13 @@ public class Reservation extends SoftDeletedDomain {
     private Integer price;
 
     public Reservation(
-            User user,
-            PerformanceSeat performanceSeat,
+            Long userId,
+            Long performanceSeatId,
             ReservationStatus reservationStatus,
             Integer price
     ) {
-        this.user = user;
-        this.performanceSeat = performanceSeat;
+        this.userId = userId;
+        this.performanceSeatId = performanceSeatId;
         this.reservationStatus = reservationStatus;
         this.price = price;
     }
