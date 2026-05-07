@@ -29,6 +29,7 @@ logging:
 #    org.hibernate.orm.jdbc.bind: trace
 
 token:
-  secret-key: c2lsdmVyLXN0YXJkdXN0LXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQtZ2VuZXJhdGVkLWJ5LXNlb3llb24
+  # 테스트 전용 키. 실제 운영 환경에서는 절대 사용 금지. 256-bit 이상 무작위 키를 환경변수로 주입.
+  secret-key: ${TOKEN_SECRET_KEY:dGVzdC1vbmx5LWtleS1kby1ub3QtdXNlLWluLXByb2QtbWluaW11bS0yNTYtYml0LWxlbmd0aA==}
   access-token-expiration-millis: 86400000
   refresh-token-expiration-millis: 1209600000

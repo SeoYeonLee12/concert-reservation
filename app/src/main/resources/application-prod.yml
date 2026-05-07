@@ -8,9 +8,17 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    # prod에서는 SQL 로그를 끔 (info disclosure 회피, 성능)
+    show-sql: false
 
 token:
-  secret-key: ${secretKey}
+  secret-key: ${TOKEN_SECRET_KEY:${secretKey}}
   access-token-expiration-millis: ${accessTokenExpiration}
   refresh-token-expiration-millis: ${refreshTokenExpiration}
+
+# prod 환경에서 actuator를 별도 management 포트(9091) + 127.0.0.1 바인딩
+# (외부 노출 차단, 내부 모니터링 도구만 접근)
+management:
+  server:
+    port: 9091
+    address: 127.0.0.1
