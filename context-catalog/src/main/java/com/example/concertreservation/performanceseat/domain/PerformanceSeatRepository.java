@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +23,8 @@ public interface PerformanceSeatRepository extends JpaRepository<PerformanceSeat
                 () -> new GlobalException(PerformanceSeatErrorCode.SEAT_NOT_FOUND));
     }
 
-    // DISP-04 좌석 배치도 조회 (schedule_id 기준)
+    // DISP-04 좌석 배치도 조회 (schedule_id 기준) — seat JOIN FETCH로 N+1 방지
+    @EntityGraph(attributePaths = {"seat"})
     Page<PerformanceSeat> findAllByScheduleScheduleId(Long scheduleId, Pageable pageable);
 
     // 만료 좌석 일괄 조회 (5분 만료 스케줄러)

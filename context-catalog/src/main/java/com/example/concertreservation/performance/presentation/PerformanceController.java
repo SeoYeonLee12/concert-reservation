@@ -7,6 +7,9 @@ import com.example.concertreservation.performance.application.result.Performance
 import com.example.concertreservation.performance.presentation.dto.PerformanceGetResponse;
 import com.example.concertreservation.performance.presentation.dto.PerformanceListResponse;
 import com.example.concertreservation.performance.presentation.dto.PerformanceScheduleListResponse;
+import com.example.concertreservation.performanceseat.application.PerformanceSeatService;
+import com.example.concertreservation.performanceseat.application.result.PerformanceSeatResult;
+import com.example.concertreservation.performanceseat.presentation.dto.PerformanceSeatListResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class PerformanceController {
 
     private final PerformanceService performanceService;
+    private final PerformanceSeatService performanceSeatService;
 
     /**
      * ?strategy=distributed 파라미터로 Cache Stampede 방어 전략 전환 가능.
@@ -61,5 +65,17 @@ public class PerformanceController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(PerformanceScheduleListResponse.from(result));
+    }
+
+    @GetMapping("/{performanceId}/schedules/{scheduleId}/seats")
+    public ResponseEntity<PerformanceSeatListResponse> getPerformanceSeats(
+            @PathVariable Long performanceId,
+            @PathVariable Long scheduleId,
+            @PageableDefault(size = 200, sort = "performanceSeatId", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        List<PerformanceSeatResult> results = performanceSeatService.findSeatsByScheduleId(scheduleId, pageable);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(PerformanceSeatListResponse.from(results));
     }
 }
