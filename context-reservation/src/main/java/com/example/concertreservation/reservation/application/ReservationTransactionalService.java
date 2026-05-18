@@ -1,0 +1,100 @@
+package com.example.concertreservation.reservation.application;
+
+import com.example.concertreservation.global.outbox.OutboxEvent;
+import com.example.concertreservation.global.outbox.OutboxEventRepository;
+import com.example.concertreservation.performanceseat.domain.PerformanceSeat;
+import com.example.concertreservation.performanceseat.domain.PerformanceSeatRepository;
+import com.example.concertreservation.pointHistory.domain.PointHistory;
+import com.example.concertreservation.pointHistory.domain.PointHistoryRepository;
+import com.example.concertreservation.reservation.domain.Reservation;
+import com.example.concertreservation.reservation.domain.ReservationRepository;
+import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
+import com.example.concertreservation.reservation.event.PaymentConfirmedEvent;
+import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
+import com.example.concertreservation.global.error.exception.GlobalException;
+import com.example.concertreservation.user.domain.User;
+import com.example.concertreservation.user.domain.UserRepository;
+import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 좌석 선점 트랜잭션 경계.
+ * ReservationService에서 Redisson 락을 잡은 상태로 호출하므로,
+ * 이 메서드가 반환(= 커밋 완료)된 뒤에 락이 해제된다.
+ */
+@Service
+@RequiredArgsConstructor
+public class ReservationTransactionalService {
+
+    private final ReservationRepository reservationRepository;
+    private final PerformanceSeatRepository performanceSeatRepository;
+    private final UserRepository userRepository;
+    private final PointHistoryRepository pointHistoryRepository;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional
+    public Long doReserve(Long userId, Long performanceSeatId) {
+        userRepository.getUserById(userId);
+        PerformanceSeat seat = performanceSeatRepository.getByPerformanceSeatId(performanceSeatId);
+
+        seat.tryReserve(LocalDateTime.now());
+
+        Reservation reservation = new Reservation(
+                userId, performanceSeatId, ReservationStatus.PENDING, seat.getPrice());
+        reservationRepository.save(reservation);
+
+        return reservation.getReservationId();
+    }
+
+    @Transactional
+    public void doConfirmPayment(Long userId, Long reservationId) {
+        User user = userRepository.findByUsersIdForUpdate(userId);
+        Reservation reservation = reservationRepository.getByReservationId(reservationId);
+
+        if (!reservation.getUserId().equals(userId)) {
+            throw new GlobalException(ReservationErrorCode.RESERVATION_ACCESS_DENIED);
+        }
+
+        PerformanceSeat seat = performanceSeatRepository.getByPerformanceSeatId(reservation.getPerformanceSeatId());
+
+        user.deductPoint((long) reservation.getPrice());
+        reservation.confirm();
+        seat.confirmReservation();
+
+        pointHistoryRepository.save(
+                PointHistory.useHistory(user, reservationId, (long) reservation.getPrice(), user.getPoint()));
+
+        String payload = String.format(
+                "{\"userId\":%d,\"reservationId\":%d,\"price\":%d}",
+                userId, reservationId, reservation.getPrice());
+        OutboxEvent outboxEvent = outboxEventRepository.save(
+                OutboxEvent.pending("PAYMENT_CONFIRMED", "RESERVATION", reservationId, payload));
+
+        eventPublisher.publishEvent(
+                new PaymentConfirmedEvent(outboxEvent.getId(), userId, reservationId, reservation.getPrice()));
+    }
+
+    @Transactional
+    public void doCancelReservation(Long userId, Long reservationId) {
+        User user = userRepository.findByUsersIdForUpdate(userId);
+        Reservation reservation = reservationRepository.getByReservationId(reservationId);
+
+        if (!reservation.getUserId().equals(userId)) {
+            throw new GlobalException(ReservationErrorCode.RESERVATION_ACCESS_DENIED);
+        }
+
+        PerformanceSeat seat = performanceSeatRepository.getByPerformanceSeatId(reservation.getPerformanceSeatId());
+
+        reservation.cancel();
+        long refundAmount = reservation.refundAmount();
+        seat.cancelReservation();
+        user.chargedPoint(refundAmount);
+
+        pointHistoryRepository.save(
+                PointHistory.refundHistory(user, reservationId, refundAmount, user.getPoint()));
+    }
+}

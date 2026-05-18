@@ -17,7 +17,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -54,9 +53,6 @@ public class PerformanceSeat extends SoftDeletedDomain {
 
     @Column(name = "reserved_at", nullable = false)
     private LocalDateTime reservedAt;
-
-    @Version
-    private Integer version;
 
     public void tryReserve(LocalDateTime now) {
         if (seatStatus != SeatStatus.AVAILABLE) {

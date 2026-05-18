@@ -2,14 +2,17 @@ package com.example.concertreservation.global.error.handler;
 
 import com.example.concertreservation.global.error.errorcode.ErrorCode;
 import com.example.concertreservation.global.error.errorcode.InternalServerErrorCode;
+import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
 import com.example.concertreservation.global.error.response.ErrorResponse;
 import com.example.concertreservation.global.error.response.MethodArgumentErrorResponse;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -29,6 +32,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(code.getHttpStatus())
                 .body(ErrorResponse.from(code));
+    }
+
+    @ExceptionHandler({CannotAcquireLockException.class, ObjectOptimisticLockingFailureException.class})
+    public ResponseEntity<ErrorResponse> handleLockConflict(Exception e) {
+        log.warn("Lock conflict: {}", e.getMessage());
+        ErrorCode code = ReservationErrorCode.SEAT_CONFLICT;
+        return ResponseEntity.status(code.getHttpStatus()).body(ErrorResponse.from(code));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
