@@ -1,5 +1,6 @@
 package com.example.concertreservation.performance.application;
 
+import com.example.concertreservation.global.cache.CacheStampedeGuard;
 import com.example.concertreservation.performance.application.result.PerformanceGetResult;
 import com.example.concertreservation.performance.application.result.PerformanceListResult;
 import com.example.concertreservation.performance.application.result.PerformanceScheduleListResult;
@@ -21,15 +22,38 @@ public class PerformanceService {
 
     private final PerformanceRepository performanceRepository;
     private final ScheduleRepository scheduleRepository;
+    private final CacheStampedeGuard cacheStampedeGuard;
 
+    /**
+     * [Step 1] @Cacheable(sync=true) — JVM 로컬 동기화.
+     * 같은 프로세스 내에서 캐시 미스 시 단 1개 스레드만 DB 조회.
+     * 단일 인스턴스 환경에서 Cache Stampede 방어.
+     */
     @Cacheable(cacheNames = "performanceList",
-               key = "#pageable.pageNumber + '-' + #pageable.pageSize")
+               key = "#pageable.pageNumber + '-' + #pageable.pageSize",
+               sync = true)
     @Transactional(readOnly = true)
     public List<PerformanceListResult> findPerformanceList(Pageable pageable) {
         Page<Performance> page = performanceRepository.findAllList(pageable);
         return page.getContent().stream()
                 .map(PerformanceListResult::from)
                 .toList();
+    }
+
+    /**
+     * [Step 2] Redisson 분산 락 — 멀티 인스턴스 분산 환경 보호.
+     * 여러 서버가 동시에 같은 캐시 키를 갱신하려 할 때 단 1개 서버만 DB 조회.
+     * @Cacheable(sync=true)의 분산 버전.
+     */
+    @Transactional(readOnly = true)
+    public List<PerformanceListResult> findPerformanceListDistributed(Pageable pageable) {
+        String key = pageable.getPageNumber() + "-" + pageable.getPageSize();
+        return cacheStampedeGuard.protect("performanceList", key, () -> {
+            Page<Performance> page = performanceRepository.findAllList(pageable);
+            return page.getContent().stream()
+                    .map(PerformanceListResult::from)
+                    .toList();
+        });
     }
 
     @Cacheable(cacheNames = "performanceDetail", key = "#performanceId")

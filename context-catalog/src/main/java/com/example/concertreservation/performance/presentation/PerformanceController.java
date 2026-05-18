@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequiredArgsConstructor
@@ -26,12 +27,21 @@ public class PerformanceController {
 
     private final PerformanceService performanceService;
 
+    /**
+     * ?strategy=distributed 파라미터로 Cache Stampede 방어 전략 전환 가능.
+     * 기본값: sync=true (JVM 로컬 동기화)
+     * distributed: Redisson 분산 락 (멀티 인스턴스 보호)
+     * k6 부하 테스트로 두 전략의 p95/p99 차이를 측정.
+     */
     @GetMapping
     public ResponseEntity<PerformanceListResponse> getPerformanceList(
             @PageableDefault(size = 20, sort = "performanceId", direction = Sort.Direction.DESC)
-            Pageable pageable
+            Pageable pageable,
+            @RequestParam(defaultValue = "sync") String strategy
     ) {
-        List<PerformanceListResult> results = performanceService.findPerformanceList(pageable);
+        List<PerformanceListResult> results = "distributed".equals(strategy)
+                ? performanceService.findPerformanceListDistributed(pageable)
+                : performanceService.findPerformanceList(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(PerformanceListResponse.from(results));
     }
 

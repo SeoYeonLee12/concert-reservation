@@ -54,6 +54,13 @@ public class Reservation extends SoftDeletedDomain {
         this.price = price;
     }
 
+    public void expire() {
+        if (this.reservationStatus != ReservationStatus.PENDING) {
+            throw new GlobalException(ReservationErrorCode.NOT_PENDING);
+        }
+        this.reservationStatus = ReservationStatus.EXPIRED;
+    }
+
     public void confirm() {
         if (this.reservationStatus != ReservationStatus.PENDING) {
             throw new GlobalException(ReservationErrorCode.NOT_PENDING);
