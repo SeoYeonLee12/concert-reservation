@@ -43,9 +43,9 @@ public class SeatExpirationScheduler {
         for (PerformanceSeat seat : expiredSeats) {
             seat.release();
 
-            reservationRepository.findByPerformanceSeatIdAndReservationStatus(
+            reservationRepository.findAllByPerformanceSeatIdAndReservationStatus(
                             seat.getPerformanceSeatId(), ReservationStatus.PENDING)
-                    .ifPresent(reservation -> {
+                    .forEach(reservation -> {
                         reservation.expire();
                         log.debug("[좌석 만료] seatId={}, reservationId={}",
                                 seat.getPerformanceSeatId(), reservation.getReservationId());
