@@ -26,4 +26,7 @@ dependencies {
 
     // Redisson (분산 락 전용)
     api 'org.redisson:redisson-spring-boot-starter:3.50.0'
+
+    // Kafka
+    api 'org.springframework.kafka:spring-kafka'
 }
