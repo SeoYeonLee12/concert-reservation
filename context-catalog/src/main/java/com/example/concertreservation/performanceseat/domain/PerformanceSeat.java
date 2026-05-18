@@ -80,6 +80,13 @@ public class PerformanceSeat extends SoftDeletedDomain {
         seatStatus = SeatStatus.AVAILABLE;
     }
 
+    public void cancelReservation() {
+        if (seatStatus != SeatStatus.SOLD) {
+            throw new GlobalException(PerformanceSeatErrorCode.NOT_SOLD);
+        }
+        seatStatus = SeatStatus.AVAILABLE;
+    }
+
     public boolean isExpired(LocalDateTime now, Duration window) {
         if (seatStatus != SeatStatus.TEMPORARY) {
             return false;

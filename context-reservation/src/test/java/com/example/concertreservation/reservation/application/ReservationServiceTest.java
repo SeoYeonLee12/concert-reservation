@@ -12,11 +12,15 @@ import static org.mockito.Mockito.when;
 
 import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
+import com.example.concertreservation.global.outbox.OutboxEvent;
+import com.example.concertreservation.global.outbox.OutboxEventRepository;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeat;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeatRepository;
 import com.example.concertreservation.performanceseat.domain.enums.SeatStatus;
+import com.example.concertreservation.pointHistory.domain.PointHistoryRepository;
 import com.example.concertreservation.reservation.domain.Reservation;
 import com.example.concertreservation.reservation.domain.ReservationRepository;
+import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
 import java.lang.reflect.Field;
@@ -28,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceTest {
@@ -40,6 +45,15 @@ class ReservationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PointHistoryRepository pointHistoryRepository;
+
+    @Mock
+    private OutboxEventRepository outboxEventRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private RedissonClient redissonClient;
@@ -134,7 +148,128 @@ class ReservationServiceTest {
         verify(reservationRepository, never()).save(any());
     }
 
+    // -------- confirmPayment 테스트 --------
+
+    @Test
+    void 결제_확정_성공() {
+        Long userId = 1L;
+        Long reservationId = 10L;
+
+        User user = createUserWithPoint(100_000L);
+        when(userRepository.findByUsersIdForUpdate(userId)).thenReturn(user);
+
+        Reservation reservation = createReservation(userId, 100L, ReservationStatus.PENDING, 50_000);
+        when(reservationRepository.getByReservationId(reservationId)).thenReturn(reservation);
+
+        PerformanceSeat seat = createSeatWithStatus(SeatStatus.TEMPORARY);
+        when(performanceSeatRepository.getByPerformanceSeatId(100L)).thenReturn(seat);
+
+        OutboxEvent savedEvent = mock(OutboxEvent.class);
+        when(savedEvent.getId()).thenReturn(999L);
+        when(outboxEventRepository.save(any(OutboxEvent.class))).thenReturn(savedEvent);
+
+        reservationService.confirmPayment(userId, reservationId);
+
+        assertThat(seat.getSeatStatus()).isEqualTo(SeatStatus.SOLD);
+        assertThat(reservation.getReservationStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+        assertThat(user.getPoint()).isEqualTo(50_000L);
+        verify(pointHistoryRepository).save(any());
+        verify(outboxEventRepository).save(any(OutboxEvent.class));
+        verify(eventPublisher).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void 결제_확정_시_다른_사용자_예약이면_ACCESS_DENIED() {
+        Long userId = 1L;
+        Long otherUserId = 99L;
+        Long reservationId = 10L;
+
+        when(userRepository.findByUsersIdForUpdate(userId)).thenReturn(createUserWithPoint(100_000L));
+
+        Reservation reservation = createReservation(otherUserId, 100L, ReservationStatus.PENDING, 50_000);
+        when(reservationRepository.getByReservationId(reservationId)).thenReturn(reservation);
+
+        assertThatThrownBy(() -> reservationService.confirmPayment(userId, reservationId))
+                .isInstanceOf(GlobalException.class)
+                .extracting(e -> ((GlobalException) e).getCode())
+                .isEqualTo(ReservationErrorCode.RESERVATION_ACCESS_DENIED);
+
+        verify(pointHistoryRepository, never()).save(any());
+        verify(outboxEventRepository, never()).save(any());
+    }
+
+    // -------- cancelReservation 테스트 --------
+
+    @Test
+    void 예약_취소_환불_성공() {
+        Long userId = 1L;
+        Long reservationId = 10L;
+
+        User user = createUserWithPoint(0L);
+        when(userRepository.findByUsersIdForUpdate(userId)).thenReturn(user);
+
+        Reservation reservation = createReservation(userId, 100L, ReservationStatus.CONFIRMED, 50_000);
+        when(reservationRepository.getByReservationId(reservationId)).thenReturn(reservation);
+
+        PerformanceSeat seat = createSeatWithStatus(SeatStatus.SOLD);
+        when(performanceSeatRepository.getByPerformanceSeatId(100L)).thenReturn(seat);
+
+        reservationService.cancelReservation(userId, reservationId);
+
+        assertThat(seat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
+        assertThat(reservation.getReservationStatus()).isEqualTo(ReservationStatus.CANCELLED);
+        assertThat(user.getPoint()).isEqualTo(50_000L);
+        verify(pointHistoryRepository).save(any());
+    }
+
+    @Test
+    void 예약_취소_시_다른_사용자_예약이면_ACCESS_DENIED() {
+        Long userId = 1L;
+        Long otherUserId = 99L;
+        Long reservationId = 10L;
+
+        when(userRepository.findByUsersIdForUpdate(userId)).thenReturn(createUserWithPoint(0L));
+
+        Reservation reservation = createReservation(otherUserId, 100L, ReservationStatus.CONFIRMED, 50_000);
+        when(reservationRepository.getByReservationId(reservationId)).thenReturn(reservation);
+
+        assertThatThrownBy(() -> reservationService.cancelReservation(userId, reservationId))
+                .isInstanceOf(GlobalException.class)
+                .extracting(e -> ((GlobalException) e).getCode())
+                .isEqualTo(ReservationErrorCode.RESERVATION_ACCESS_DENIED);
+
+        verify(pointHistoryRepository, never()).save(any());
+    }
+
     // ---------------- fixtures ----------------
+
+    private static User createUserWithPoint(long point) {
+        try {
+            var ctor = User.class.getDeclaredConstructor();
+            ctor.setAccessible(true);
+            User user = ctor.newInstance();
+            setField(user, "usersId", 1L);
+            setField(user, "point", point);
+            return user;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Reservation createReservation(Long userId, Long seatId, ReservationStatus status, int price) {
+        try {
+            var ctor = Reservation.class.getDeclaredConstructor();
+            ctor.setAccessible(true);
+            Reservation reservation = ctor.newInstance();
+            setField(reservation, "userId", userId);
+            setField(reservation, "performanceSeatId", seatId);
+            setField(reservation, "reservationStatus", status);
+            setField(reservation, "price", price);
+            return reservation;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static PerformanceSeat createAvailableSeat(int price) {
         return createSeatWithStatus(SeatStatus.AVAILABLE, price);

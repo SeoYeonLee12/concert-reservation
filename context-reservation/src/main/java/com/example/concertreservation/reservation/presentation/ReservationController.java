@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,5 +29,23 @@ public class ReservationController {
         Long reservationId = reservationService.tryReserve(userId, request.performanceSeatId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ReservationCreateResponse(reservationId));
+    }
+
+    @PostMapping("/{reservationId}/confirm")
+    public ResponseEntity<Void> confirmPayment(
+            @Auth Long userId,
+            @PathVariable Long reservationId
+    ) {
+        reservationService.confirmPayment(userId, reservationId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{reservationId}/cancel")
+    public ResponseEntity<Void> cancelReservation(
+            @Auth Long userId,
+            @PathVariable Long reservationId
+    ) {
+        reservationService.cancelReservation(userId, reservationId);
+        return ResponseEntity.ok().build();
     }
 }
