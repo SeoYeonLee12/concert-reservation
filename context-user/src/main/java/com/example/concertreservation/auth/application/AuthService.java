@@ -1,0 +1,40 @@
+package com.example.concertreservation.auth.application;
+
+import com.example.concertreservation.auth.Token;
+import com.example.concertreservation.auth.TokenErrorCode;
+import com.example.concertreservation.auth.TokenProperty;
+import com.example.concertreservation.auth.TokenService;
+import com.example.concertreservation.global.error.exception.GlobalException;
+import com.example.concertreservation.user.application.RedisService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final RedisService redisService;
+    private final TokenService tokenService;
+    private final TokenProperty tokenProperty;
+
+    @Transactional
+    public Token reissueToken(Long userId, String refreshToken) {
+        String savedRefreshToken = redisService.getRefreshToken(userId);
+        if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
+            throw new GlobalException(TokenErrorCode.INVALID_TOKEN);
+        }
+        Token newToken = tokenService.issueTokens(userId);
+        redisService.save(userId, newToken.refreshToken(), tokenProperty.refreshTokenExpirationMillis());
+        return newToken;
+    }
+
+    public void logout(Long userId, String accessToken) {
+        String jti = tokenService.extractJti(accessToken);
+        long remainingMs = tokenService.remainingTtlMillis(accessToken);
+        if (remainingMs > 0) {
+            redisService.blacklistAccessToken(jti, remainingMs);
+        }
+        redisService.delete(userId);
+    }
+}

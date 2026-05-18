@@ -1,0 +1,7 @@
+// :context-reservation — Reservation + PointHistory 도메인 (결제 트랜잭션 컨텍스트)
+
+dependencies {
+    implementation project(':common')
+    implementation project(':context-user')
+    implementation project(':context-catalog')
+}

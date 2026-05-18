@@ -1,1 +1,7 @@
 rootProject.name = 'concert-reservation'
+
+include 'app'
+include 'common'
+include 'context-user'
+include 'context-catalog'
+include 'context-reservation'

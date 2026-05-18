@@ -1,0 +1,86 @@
+package com.example.concertreservation.auth;
+
+import com.example.concertreservation.global.error.exception.GlobalException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+import java.util.UUID;
+
+@Component
+public class TokenService {
+
+    private static final String USER_ID_CLAIM = "userId";
+
+    private final SecretKey secretKey;
+    private final long accessTokenExpirationMillis;
+    private final long refreshTokenExpirationMillis;
+
+    public TokenService(TokenProperty tokenProperty) {
+        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(tokenProperty.secretKey()));
+        this.accessTokenExpirationMillis = tokenProperty.accessTokenExpirationMillis();
+        this.refreshTokenExpirationMillis = tokenProperty.refreshTokenExpirationMillis();
+    }
+
+    public Token issueTokens(Long userId) {
+        String accessToken = createAccessToken(userId);
+        String refreshToken = createRefreshToken(userId);
+        return new Token(accessToken, refreshToken);
+    }
+
+    public Long extractUserId(String token) {
+        return parseClaims(token).get(USER_ID_CLAIM, Long.class);
+    }
+
+    public String extractJti(String token) {
+        return parseClaims(token).getId();
+    }
+
+    public long remainingTtlMillis(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        long remaining = expiration.getTime() - System.currentTimeMillis();
+        return Math.max(remaining, 0L);
+    }
+
+    private Claims parseClaims(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            throw new GlobalException(TokenErrorCode.EXPIRED_TOKEN);
+        } catch (MalformedJwtException e) {
+            throw new GlobalException(TokenErrorCode.INVALID_TOKEN);
+        } catch (Exception e) {
+            throw new GlobalException(TokenErrorCode.UNKNOWN_TOKEN);
+        }
+    }
+
+    private String createAccessToken(Long userId) {
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .claim(USER_ID_CLAIM, userId)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMillis))
+                .signWith(secretKey, Jwts.SIG.HS256)
+                .compact();
+    }
+
+    private String createRefreshToken(Long userId) {
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .claim(USER_ID_CLAIM, userId)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMillis))
+                .signWith(secretKey, Jwts.SIG.HS256)
+                .compact();
+    }
+}

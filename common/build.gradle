@@ -1,0 +1,29 @@
+// :common — 모든 도메인 모듈이 공유하는 인프라 (BaseDomain, Exception, JWT, AOP, Config)
+
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // 도메인 모듈이 transitive로 사용해야 하므로 api 사용
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+    api 'org.springframework.boot:spring-boot-starter-validation'
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Spring Retry (낙관적 락 재시도 AOP)
+    api 'org.springframework.retry:spring-retry'
+    api 'org.springframework:spring-aspects'
+
+    // BCrypt 비밀번호 해시 (Password 도메인)
+    api 'org.springframework.security:spring-security-crypto'
+
+    // JWT (auth가 사용)
+    api 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // Redisson (분산 락 전용)
+    api 'org.redisson:redisson-spring-boot-starter:3.50.0'
+}
