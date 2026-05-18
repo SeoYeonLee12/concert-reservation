@@ -25,6 +25,20 @@ public class PerformanceService {
     private final CacheStampedeGuard cacheStampedeGuard;
 
     /**
+     * [Step 0] 보호 없는 기본 @Cacheable — Cache Stampede Before 측정용.
+     * 캐시 만료 시 모든 스레드가 동시에 DB를 조회해 Stampede 발생.
+     */
+    @Cacheable(cacheNames = "performanceList",
+               key = "#pageable.pageNumber + '-' + #pageable.pageSize")
+    @Transactional(readOnly = true)
+    public List<PerformanceListResult> findPerformanceListUnsafe(Pageable pageable) {
+        Page<Performance> page = performanceRepository.findAllList(pageable);
+        return page.getContent().stream()
+                .map(PerformanceListResult::from)
+                .toList();
+    }
+
+    /**
      * [Step 1] @Cacheable(sync=true) — JVM 로컬 동기화.
      * 같은 프로세스 내에서 캐시 미스 시 단 1개 스레드만 DB 조회.
      * 단일 인스턴스 환경에서 Cache Stampede 방어.

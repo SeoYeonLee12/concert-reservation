@@ -43,9 +43,11 @@ public class PerformanceController {
             Pageable pageable,
             @RequestParam(defaultValue = "sync") String strategy
     ) {
-        List<PerformanceListResult> results = "distributed".equals(strategy)
-                ? performanceService.findPerformanceListDistributed(pageable)
-                : performanceService.findPerformanceList(pageable);
+        List<PerformanceListResult> results = switch (strategy) {
+            case "distributed" -> performanceService.findPerformanceListDistributed(pageable);
+            case "none"        -> performanceService.findPerformanceListUnsafe(pageable);
+            default            -> performanceService.findPerformanceList(pageable);
+        };
         return ResponseEntity.status(HttpStatus.OK).body(PerformanceListResponse.from(results));
     }
 
