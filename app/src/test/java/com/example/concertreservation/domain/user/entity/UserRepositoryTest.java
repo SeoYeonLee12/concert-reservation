@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.example.concertreservation.global.config.JpaConfig;
 import com.example.concertreservation.global.domain.BaseDomain;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
@@ -12,9 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
-@Import({BaseDomain.class})
+@ActiveProfiles("test")
+@Import({BaseDomain.class, JpaConfig.class})
 public class UserRepositoryTest {
 
     @Autowired
