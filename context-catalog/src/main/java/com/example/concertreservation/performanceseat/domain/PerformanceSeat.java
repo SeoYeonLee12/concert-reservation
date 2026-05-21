@@ -17,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -50,6 +51,10 @@ public class PerformanceSeat extends SoftDeletedDomain {
     @Enumerated(value = EnumType.STRING)
     @Column(name = "status")
     private SeatStatus seatStatus;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Column(name = "reserved_at", nullable = false)
     private LocalDateTime reservedAt;

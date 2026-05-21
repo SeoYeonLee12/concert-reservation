@@ -2,103 +2,99 @@ package com.example.concertreservation.reservation.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.example.concertreservation.global.error.errorcode.PerformanceSeatErrorCode;
 import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
-import java.util.concurrent.TimeUnit;
+import com.example.concertreservation.reservation.application.strategy.ReservationLockStrategy;
+import com.example.concertreservation.waiting.application.WaitingQueueService;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 
 /**
- * ReservationService 단위 테스트 — Redisson 분산 락 동작에 집중.
- * 비즈니스 로직(doReserve/doConfirmPayment/doCancelReservation)은
- * ReservationTransactionalServiceTest에서 검증.
+ * ReservationService 단위 테스트 — 전략 라우팅 동작에 집중.
+ * 개별 락 전략 로직은 각 전략 테스트에서, 비즈니스 로직은 ReservationTransactionalServiceTest에서 검증.
  */
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceTest {
 
-    @Mock
-    private RedissonClient redissonClient;
+    @Mock private ReservationLockStrategy redissonStrategy;
+    @Mock private ReservationLockStrategy namedLockStrategy;
+    @Mock private ReservationLockStrategy optimisticStrategy;
+    @Mock private ReservationTransactionalService reservationTransactionalService;
+    @Mock private WaitingQueueService waitingQueueService;
 
-    @Mock
-    private RLock rLock;
-
-    @Mock
-    private ReservationTransactionalService reservationTransactionalService;
-
-    @InjectMocks
     private ReservationService reservationService;
 
-    @Test
-    void 락_획득_성공시_트랜잭션_서비스_호출하고_예약ID_반환() throws Exception {
-        Long userId = 1L;
-        Long seatId = 100L;
-        when(redissonClient.getLock(eq("lock:seat:" + seatId))).thenReturn(rLock);
-        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
-        when(rLock.isHeldByCurrentThread()).thenReturn(true);
-        when(reservationTransactionalService.doReserve(userId, seatId)).thenReturn(999L);
+    @BeforeEach
+    void setUp() {
+        Map<String, ReservationLockStrategy> strategies = Map.of(
+                "redisson", redissonStrategy,
+                "named-lock", namedLockStrategy,
+                "optimistic", optimisticStrategy
+        );
+        reservationService = new ReservationService(strategies, reservationTransactionalService, waitingQueueService);
+    }
 
-        Long reservationId = reservationService.tryReserve(userId, seatId);
+    @Test
+    void redisson_전략으로_좌석_선점_성공() {
+        when(redissonStrategy.tryReserve(1L, 100L)).thenReturn(999L);
+
+        Long reservationId = reservationService.tryReserve(1L, 100L, "redisson");
 
         assertThat(reservationId).isEqualTo(999L);
-        verify(reservationTransactionalService).doReserve(userId, seatId);
-        verify(rLock).unlock();
+        verify(redissonStrategy).tryReserve(1L, 100L);
+        verify(namedLockStrategy, never()).tryReserve(anyLong(), anyLong());
+        verify(optimisticStrategy, never()).tryReserve(anyLong(), anyLong());
+        verify(waitingQueueService).markDone(1L, 100L);
     }
 
     @Test
-    void 락_획득_실패시_SEAT_LOCK_TIMEOUT_예외_발생() throws Exception {
-        Long seatId = 100L;
-        when(redissonClient.getLock(eq("lock:seat:" + seatId))).thenReturn(rLock);
-        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(false);
+    void named_lock_전략으로_좌석_선점_성공() {
+        when(namedLockStrategy.tryReserve(1L, 100L)).thenReturn(888L);
 
-        assertThatThrownBy(() -> reservationService.tryReserve(1L, seatId))
-                .isInstanceOf(GlobalException.class)
-                .extracting(e -> ((GlobalException) e).getCode())
-                .isEqualTo(ReservationErrorCode.SEAT_LOCK_TIMEOUT);
+        Long reservationId = reservationService.tryReserve(1L, 100L, "named-lock");
 
-        verify(reservationTransactionalService, never()).doReserve(anyLong(), anyLong());
-        verify(rLock, never()).unlock();
+        assertThat(reservationId).isEqualTo(888L);
+        verify(namedLockStrategy).tryReserve(1L, 100L);
+        verify(redissonStrategy, never()).tryReserve(anyLong(), anyLong());
     }
 
     @Test
-    void 락_대기중_인터럽트시_SEAT_LOCK_INTERRUPTED_예외_발생() throws Exception {
-        Long seatId = 100L;
-        when(redissonClient.getLock(eq("lock:seat:" + seatId))).thenReturn(rLock);
-        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class)))
-                .thenThrow(new InterruptedException());
+    void optimistic_전략으로_좌석_선점_성공() {
+        when(optimisticStrategy.tryReserve(1L, 100L)).thenReturn(777L);
 
-        assertThatThrownBy(() -> reservationService.tryReserve(1L, seatId))
-                .isInstanceOf(GlobalException.class)
-                .extracting(e -> ((GlobalException) e).getCode())
-                .isEqualTo(ReservationErrorCode.SEAT_LOCK_INTERRUPTED);
+        Long reservationId = reservationService.tryReserve(1L, 100L, "optimistic");
 
-        assertThat(Thread.interrupted()).isTrue();
+        assertThat(reservationId).isEqualTo(777L);
+        verify(optimisticStrategy).tryReserve(1L, 100L);
     }
 
     @Test
-    void 도메인_invariant_위반시_예외_전파되고_락_반드시_해제() throws Exception {
-        Long seatId = 100L;
-        when(redissonClient.getLock(eq("lock:seat:" + seatId))).thenReturn(rLock);
-        when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
-        when(rLock.isHeldByCurrentThread()).thenReturn(true);
-        when(reservationTransactionalService.doReserve(anyLong(), eq(seatId)))
-                .thenThrow(new GlobalException(PerformanceSeatErrorCode.NOT_RESERVABLE));
+    void 알_수_없는_전략은_redisson_기본값으로_폴백() {
+        when(redissonStrategy.tryReserve(1L, 100L)).thenReturn(999L);
 
-        assertThatThrownBy(() -> reservationService.tryReserve(1L, seatId))
+        Long reservationId = reservationService.tryReserve(1L, 100L, "unknown-strategy");
+
+        assertThat(reservationId).isEqualTo(999L);
+        verify(redissonStrategy).tryReserve(1L, 100L);
+    }
+
+    @Test
+    void 좌석_선점_실패시_waitingQueue_markDone_호출_안함() {
+        when(redissonStrategy.tryReserve(1L, 100L))
+                .thenThrow(new GlobalException(ReservationErrorCode.SEAT_LOCK_TIMEOUT));
+
+        assertThatThrownBy(() -> reservationService.tryReserve(1L, 100L, "redisson"))
                 .isInstanceOf(GlobalException.class);
 
-        verify(rLock).unlock();
+        verify(waitingQueueService, never()).markDone(anyLong(), anyLong());
     }
 }
