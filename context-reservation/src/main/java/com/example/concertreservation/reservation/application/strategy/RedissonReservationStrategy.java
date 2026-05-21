@@ -5,12 +5,10 @@ import com.example.concertreservation.global.error.exception.GlobalException;
 import com.example.concertreservation.reservation.application.ReservationTransactionalService;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component("redisson")
 @RequiredArgsConstructor
 public class RedissonReservationStrategy implements ReservationLockStrategy {
