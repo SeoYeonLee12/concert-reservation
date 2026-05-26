@@ -28,6 +28,7 @@ class ReservationServiceTest {
     @Mock private ReservationLockStrategy redissonStrategy;
     @Mock private ReservationLockStrategy namedLockStrategy;
     @Mock private ReservationLockStrategy optimisticStrategy;
+    @Mock private ReservationLockStrategy pessimisticStrategy;
     @Mock private ReservationTransactionalService reservationTransactionalService;
     @Mock private WaitingQueueService waitingQueueService;
 
@@ -38,7 +39,8 @@ class ReservationServiceTest {
         Map<String, ReservationLockStrategy> strategies = Map.of(
                 "redisson", redissonStrategy,
                 "named-lock", namedLockStrategy,
-                "optimistic", optimisticStrategy
+                "optimistic", optimisticStrategy,
+                "pessimistic", pessimisticStrategy
         );
         reservationService = new ReservationService(strategies, reservationTransactionalService, waitingQueueService);
     }
@@ -75,6 +77,17 @@ class ReservationServiceTest {
 
         assertThat(reservationId).isEqualTo(777L);
         verify(optimisticStrategy).tryReserve(1L, 100L);
+    }
+
+    @Test
+    void pessimistic_전략으로_좌석_선점_성공() {
+        when(pessimisticStrategy.tryReserve(1L, 100L)).thenReturn(666L);
+
+        Long reservationId = reservationService.tryReserve(1L, 100L, "pessimistic");
+
+        assertThat(reservationId).isEqualTo(666L);
+        verify(pessimisticStrategy).tryReserve(1L, 100L);
+        verify(redissonStrategy, never()).tryReserve(anyLong(), anyLong());
     }
 
     @Test

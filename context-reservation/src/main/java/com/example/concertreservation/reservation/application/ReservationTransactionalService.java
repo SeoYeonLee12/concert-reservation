@@ -50,6 +50,18 @@ public class ReservationTransactionalService {
         return reservation.getReservationId();
     }
 
+    // 비관적 락 전용. SELECT FOR UPDATE로 락 획득 → 트랜잭션 커밋 시 자동 해제.
+    @Transactional
+    public Long doReserveWithPessimisticLock(Long userId, Long performanceSeatId) {
+        userRepository.getUserById(userId);
+        PerformanceSeat seat = performanceSeatRepository.getByPerformanceSeatIdWithPessimisticLock(performanceSeatId);
+        seat.tryReserve(LocalDateTime.now());
+        Reservation reservation = new Reservation(
+                userId, performanceSeatId, ReservationStatus.PENDING, seat.getPrice());
+        reservationRepository.save(reservation);
+        return reservation.getReservationId();
+    }
+
     @Transactional
     public void doConfirmPayment(Long userId, Long reservationId) {
         User user = userRepository.findByUsersIdForUpdate(userId);
