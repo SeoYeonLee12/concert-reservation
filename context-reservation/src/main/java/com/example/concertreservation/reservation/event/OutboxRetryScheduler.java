@@ -1,8 +1,8 @@
 package com.example.concertreservation.reservation.event;
 
-import com.example.concertreservation.global.outbox.OutboxEvent;
-import com.example.concertreservation.global.outbox.OutboxEventRepository;
-import com.example.concertreservation.global.outbox.OutboxStatus;
+import com.example.concertreservation.global.event.DomainEvent;
+import com.example.concertreservation.global.event.DomainEventRepository;
+import com.example.concertreservation.global.event.EventStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -17,37 +17,40 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OutboxRetryScheduler {
 
-    private final OutboxEventRepository outboxEventRepository;
+    private final DomainEventRepository domainEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     /**
-     * 30초마다 PENDING 상태의 outbox 이벤트를 Kafka에 재발행.
-     * PaymentEventListener에서 발행에 실패한 이벤트를 at-least-once로 복구.
+     * 30초마다 INIT 상태의 DomainEvent를 Kafka에 재발행.
+     * PaymentEventListener 비동기 발행 실패 시 at-least-once 복구.
+     * message key = uuid → 컨슈머 Redis 멱등성으로 중복 처리 방지.
      */
     @Scheduled(fixedDelay = 30_000)
     @Transactional
     public void retryPendingEvents() {
         LocalDateTime threshold = LocalDateTime.now().minusSeconds(30);
-        List<OutboxEvent> stuckEvents =
-                outboxEventRepository.findByStatusAndCreatedAtBefore(OutboxStatus.PENDING, threshold);
+        List<DomainEvent> stuckEvents =
+                domainEventRepository.findByStatusAndCreatedAtBefore(EventStatus.INIT, threshold);
 
         if (stuckEvents.isEmpty()) {
             return;
         }
 
-        log.warn("[Outbox 재처리] PENDING 이벤트 {}건 Kafka 재발행 시도", stuckEvents.size());
+        log.warn("[Outbox 재처리] INIT 이벤트 {}건 Kafka 재발행 시도", stuckEvents.size());
         stuckEvents.forEach(e -> {
-            try {
-                kafkaTemplate.send(
-                        PaymentEventListener.TOPIC,
-                        String.valueOf(e.getAggregateId()),
-                        e.getPayload()
-                );
-                e.markPublished();
-                log.info("[Outbox 재처리 완료] id={}, aggregateId={}", e.getId(), e.getAggregateId());
-            } catch (Exception ex) {
-                log.error("[Outbox 재처리 실패] id={}: {}", e.getId(), ex.getMessage());
-                e.markFailed();
+            if (e instanceof PaymentConfirmedDomainEvent paymentEvent) {
+                try {
+                    kafkaTemplate.send(
+                            paymentEvent.getTopic(),
+                            paymentEvent.getUuid(),
+                            paymentEvent.getPayload()
+                    );
+                    paymentEvent.produceSuccess();
+                    log.info("[Outbox 재처리 완료] id={}, uuid={}", paymentEvent.getId(), paymentEvent.getUuid());
+                } catch (Exception ex) {
+                    paymentEvent.produceFail(ex);
+                    log.error("[Outbox 재처리 실패] id={}: {}", paymentEvent.getId(), ex.getMessage());
+                }
             }
         });
     }

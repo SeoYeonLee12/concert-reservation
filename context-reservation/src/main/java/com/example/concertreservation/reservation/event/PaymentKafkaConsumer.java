@@ -24,20 +24,20 @@ public class PaymentKafkaConsumer {
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consume(ConsumerRecord<String, String> record) {
-        String reservationId = record.key();
-        String idempotentKey = IDEMPOTENT_KEY_PREFIX + reservationId;
+        String uuid = record.key();
+        String idempotentKey = IDEMPOTENT_KEY_PREFIX + uuid;
 
         Boolean isNew = stringRedisTemplate.opsForValue()
                 .setIfAbsent(idempotentKey, "1", IDEMPOTENT_TTL);
 
         if (Boolean.FALSE.equals(isNew)) {
-            log.warn("[Kafka 중복 수신 무시] reservationId={}, offset={}", reservationId, record.offset());
+            log.warn("[Kafka 중복 수신 무시] uuid={}, offset={}", uuid, record.offset());
             return;
         }
 
-        log.info("[Kafka 수신] topic={}, partition={}, offset={}, key={}",
-                record.topic(), record.partition(), record.offset(), record.key());
-        log.info("[티켓 발행] reservationId={}, payload={}", record.key(), record.value());
-        log.info("[이메일 알림] reservationId={} — 예약 확정 안내 발송 완료", record.key());
+        log.info("[Kafka 수신] topic={}, partition={}, offset={}, uuid={}",
+                record.topic(), record.partition(), record.offset(), uuid);
+        log.info("[티켓 발행] uuid={}, payload={}", uuid, record.value());
+        log.info("[이메일 알림] uuid={} — 예약 확정 안내 발송 완료", uuid);
     }
 }

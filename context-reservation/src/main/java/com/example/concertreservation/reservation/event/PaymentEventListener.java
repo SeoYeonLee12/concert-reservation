@@ -1,9 +1,11 @@
 package com.example.concertreservation.reservation.event;
 
-import com.example.concertreservation.global.outbox.OutboxEventRepository;
+import com.example.concertreservation.global.event.DomainEventRepository;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,35 +19,33 @@ public class PaymentEventListener {
 
     static final String TOPIC = "payment.confirmed";
 
-    private final OutboxEventRepository outboxEventRepository;
+    private final DomainEventRepository domainEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     /**
-     * 결제 트랜잭션 커밋 이후 Kafka에 이벤트 발행.
-     * 발행 성공 시 OutboxEvent → PUBLISHED, 실패 시 PENDING 유지 (OutboxRetryScheduler가 재처리).
+     * 결제 트랜잭션 커밋 이후 비동기로 Kafka에 이벤트 발행.
+     * message key = DomainEvent.uuid → 컨슈머 Redis 멱등성 검사에 사용.
+     * 발행 성공 → PRODUCE_SUCCESS, 실패 → PRODUCE_FAIL (OutboxRetryScheduler 재처리 없음).
+     * INIT 상태로 남은 이벤트는 OutboxRetryScheduler가 30초 후 재처리.
      */
+    @Async("EVENT_ASYNC_TASK_EXECUTOR")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handlePaymentConfirmed(PaymentConfirmedEvent event) {
-        outboxEventRepository.findById(event.outboxEventId()).ifPresent(outboxEvent -> {
+        domainEventRepository.findById(event.domainEventId()).ifPresent(domainEvent -> {
+            PaymentConfirmedDomainEvent paymentEvent = (PaymentConfirmedDomainEvent) domainEvent;
             try {
-                kafkaTemplate.send(TOPIC, String.valueOf(event.reservationId()), outboxEvent.getPayload())
-                        .whenComplete((result, ex) -> {
-                            if (ex != null) {
-                                log.error("[Kafka 발행 실패] outboxId={}, reservationId={}: {}",
-                                        outboxEvent.getId(), event.reservationId(), ex.getMessage());
-                            } else {
-                                log.info("[Kafka 발행 완료] outboxId={}, reservationId={}, partition={}, offset={}",
-                                        outboxEvent.getId(), event.reservationId(),
-                                        result.getRecordMetadata().partition(),
-                                        result.getRecordMetadata().offset());
-                            }
-                        });
-                outboxEvent.markPublished();
-                outboxEventRepository.save(outboxEvent);
+                kafkaTemplate.send(TOPIC, paymentEvent.getUuid(), paymentEvent.getPayload())
+                        .get(10, TimeUnit.SECONDS);
+                paymentEvent.produceSuccess();
+                log.info("[Kafka 발행 완료] domainEventId={}, uuid={}, reservationId={}",
+                        paymentEvent.getId(), paymentEvent.getUuid(), event.reservationId());
             } catch (Exception e) {
-                log.error("[Kafka 발행 예외] outboxId={}: {}", outboxEvent.getId(), e.getMessage());
+                paymentEvent.produceFail(e);
+                log.error("[Kafka 발행 실패] domainEventId={}, uuid={}: {}",
+                        paymentEvent.getId(), paymentEvent.getUuid(), e.getMessage());
             }
+            domainEventRepository.save(paymentEvent);
         });
     }
 }

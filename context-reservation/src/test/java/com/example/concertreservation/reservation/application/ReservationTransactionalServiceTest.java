@@ -10,8 +10,8 @@ import static org.mockito.Mockito.when;
 
 import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
-import com.example.concertreservation.global.outbox.OutboxEvent;
-import com.example.concertreservation.global.outbox.OutboxEventRepository;
+import com.example.concertreservation.global.event.DomainEvent;
+import com.example.concertreservation.global.event.DomainEventRepository;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeat;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeatRepository;
 import com.example.concertreservation.performanceseat.domain.enums.SeatStatus;
@@ -19,6 +19,7 @@ import com.example.concertreservation.pointHistory.domain.PointHistoryRepository
 import com.example.concertreservation.reservation.domain.Reservation;
 import com.example.concertreservation.reservation.domain.ReservationRepository;
 import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
+import com.example.concertreservation.reservation.event.PaymentConfirmedEvent;
 import com.example.concertreservation.user.domain.User;
 import com.example.concertreservation.user.domain.UserRepository;
 import java.lang.reflect.Field;
@@ -36,7 +37,7 @@ class ReservationTransactionalServiceTest {
     @Mock private PerformanceSeatRepository performanceSeatRepository;
     @Mock private UserRepository userRepository;
     @Mock private PointHistoryRepository pointHistoryRepository;
-    @Mock private OutboxEventRepository outboxEventRepository;
+    @Mock private DomainEventRepository domainEventRepository;
     @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
@@ -83,9 +84,10 @@ class ReservationTransactionalServiceTest {
         PerformanceSeat seat = createSeatWithStatus(SeatStatus.TEMPORARY, 50_000);
         when(performanceSeatRepository.getByPerformanceSeatId(100L)).thenReturn(seat);
 
-        OutboxEvent savedEvent = mock(OutboxEvent.class);
+        DomainEvent savedEvent = mock(DomainEvent.class);
         when(savedEvent.getId()).thenReturn(999L);
-        when(outboxEventRepository.save(any(OutboxEvent.class))).thenReturn(savedEvent);
+        when(savedEvent.getUuid()).thenReturn("test-uuid-123");
+        when(domainEventRepository.save(any(DomainEvent.class))).thenReturn(savedEvent);
 
         reservationTransactionalService.doConfirmPayment(userId, reservationId);
 
@@ -93,8 +95,8 @@ class ReservationTransactionalServiceTest {
         assertThat(reservation.getReservationStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(user.getPoint()).isEqualTo(50_000L);
         verify(pointHistoryRepository).save(any());
-        verify(outboxEventRepository).save(any(OutboxEvent.class));
-        verify(eventPublisher).publishEvent(any(Object.class));
+        verify(domainEventRepository).save(any(DomainEvent.class));
+        verify(eventPublisher).publishEvent(any(PaymentConfirmedEvent.class));
     }
 
     @Test
@@ -114,7 +116,7 @@ class ReservationTransactionalServiceTest {
                 .isEqualTo(ReservationErrorCode.RESERVATION_ACCESS_DENIED);
 
         verify(pointHistoryRepository, never()).save(any());
-        verify(outboxEventRepository, never()).save(any());
+        verify(domainEventRepository, never()).save(any());
     }
 
     // -------- doCancelReservation --------

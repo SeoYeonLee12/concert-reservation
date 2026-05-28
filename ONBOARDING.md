@@ -4,15 +4,14 @@
 
 ---
 
-## 1. 현재 상태 (2026-05-22 기준)
+## 1. 현재 상태 (2026-05-29 기준)
 
 | 항목 | 상태 |
 |------|------|
-| 현재 브랜치 | `chore/docker-infra-setup` |
-| 베이스 브랜치 | `develop` (e3969a0 — PR #6 머지 완료) |
-| 최신 커밋 | `29939b4` — Dockerfile JAR 경로 수정 |
-| 미완료 PR | `chore/docker-infra-setup` → develop (머지 필요) |
-| 다음 작업 | **Task 3: 전체 파일 상세 문서화** (미착수) |
+| 현재 브랜치 | `feat/pessimistic-lock-strategy` |
+| 베이스 브랜치 | `main` (dd47a1c — 비관적 락 전략 추가) |
+| 최신 커밋 | `dd47a1c` — 비관적 락 전략 추가 |
+| 다음 작업 | **전체 파일 상세 문서화** |
 
 ### 완료된 구현 목록
 
@@ -26,7 +25,7 @@
 | Day 3-4 | Redisson 분산 락, 락-트랜잭션 경계 분리 |
 | Day 4 | Kafka KRaft 통합 (at-least-once + 멱등성) |
 | Day 5 | 입장 대기열 + 락 전략 3종 (Redisson / Named Lock / Optimistic) |
-| 이번 세션 | k6 실측, Docker 전환, Named Lock Pool 고갈 발견·포트폴리오 기록 |
+| 2026-05-29 | **DomainEvent 추상화 + UUID 멱등성 키 + 비동기 Kafka 발행** |
 
 ---
 
@@ -103,9 +102,11 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 2: 설계 결정 확인
 ```
+/Users/sylee/Documents/concert-reservation-portfolio/decisions/018-domain-event-uuid-idempotency.md  ← 최신 (2026-05-29)
 /Users/sylee/Documents/concert-reservation-portfolio/decisions/017-waiting-queue-and-lock-strategy.md  ← Day 5 핵심
 /Users/sylee/Documents/concert-reservation-portfolio/decisions/014-lock-tx-boundary-separation.md
 /Users/sylee/Documents/concert-reservation-portfolio/decisions/015-kafka-integration-strategy.md
+/Users/sylee/Documents/concert-reservation-portfolio/decisions/016-kafka-consumer-idempotency.md
 ```
 
 ### Step 3: 트러블슈팅 이력
@@ -124,6 +125,11 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 | `context-reservation/src/main/java/.../reservation/application/strategy/OptimisticLockReservationStrategy.java` | 낙관적 락 구현 |
 | `context-reservation/src/main/java/.../waiting/domain/WaitingQueue.java` | 대기열 상태 기계 |
 | `context-catalog/src/main/java/.../performanceseat/domain/PerformanceSeat.java` | @Version 필드 |
+| `common/src/main/java/.../global/event/DomainEvent.java` | Outbox 추상 엔티티 (SINGLE_TABLE + UUID) |
+| `context-reservation/src/main/java/.../reservation/event/PaymentConfirmedDomainEvent.java` | DomainEvent 구현체 |
+| `context-reservation/src/main/java/.../reservation/event/PaymentEventListener.java` | @Async Kafka 발행 (AFTER_COMMIT) |
+| `context-reservation/src/main/java/.../reservation/event/PaymentKafkaConsumer.java` | UUID 기반 Redis 멱등성 |
+| `common/src/main/java/.../global/config/AsyncConfig.java` | EVENT_ASYNC_TASK_EXECUTOR 설정 |
 
 ---
 
