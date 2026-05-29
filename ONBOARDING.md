@@ -96,8 +96,8 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22-2.md   ← 가장 최근
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22.md
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-29.md   ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22-2.md
 ```
 
 ### Step 2: 설계 결정 확인
