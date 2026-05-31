@@ -4,14 +4,15 @@
 
 ---
 
-## 1. 현재 상태 (2026-05-29 기준)
+## 1. 현재 상태 (2026-06-01 기준)
 
 | 항목 | 상태 |
 |------|------|
-| 현재 브랜치 | `feat/pessimistic-lock-strategy` |
+| 현재 브랜치 | `feat/kafka-domain-event-uuid-idempotency` |
 | 베이스 브랜치 | `main` (dd47a1c — 비관적 락 전략 추가) |
-| 최신 커밋 | `dd47a1c` — 비관적 락 전략 추가 |
-| 다음 작업 | **전체 파일 상세 문서화** |
+| 최신 커밋 | `8441c89` — Outbox 재처리 개선 (PRODUCE_FAIL + DeadLetter) |
+| PR | #8 Ready for review → main |
+| 다음 작업 | **DB 마이그레이션 실행(08) → PR #8 머지** |
 
 ### 완료된 구현 목록
 
@@ -26,6 +27,7 @@
 | Day 4 | Kafka KRaft 통합 (at-least-once + 멱등성) |
 | Day 5 | 입장 대기열 + 락 전략 3종 (Redisson / Named Lock / Optimistic) |
 | 2026-05-29 | **DomainEvent 추상화 + UUID 멱등성 키 + 비동기 Kafka 발행** |
+| 2026-06-01 | **Outbox 재처리 개선: PRODUCE_FAIL 재처리 + retryCount + ABANDONED + DeadLetter** |
 
 ---
 
@@ -96,7 +98,8 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-29.md   ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01.md   ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-29.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22-2.md
 ```
 
