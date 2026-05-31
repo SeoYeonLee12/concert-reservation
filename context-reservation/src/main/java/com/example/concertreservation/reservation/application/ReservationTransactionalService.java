@@ -2,6 +2,8 @@ package com.example.concertreservation.reservation.application;
 
 import com.example.concertreservation.global.event.DomainEvent;
 import com.example.concertreservation.global.event.DomainEventRepository;
+import com.example.concertreservation.global.kafka.producer.PaymentConfirmedDomainEvent;
+import com.example.concertreservation.global.kafka.producer.PaymentConfirmedEvent;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeat;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeatRepository;
 import com.example.concertreservation.pointHistory.domain.PointHistory;
@@ -9,8 +11,6 @@ import com.example.concertreservation.pointHistory.domain.PointHistoryRepository
 import com.example.concertreservation.reservation.domain.Reservation;
 import com.example.concertreservation.reservation.domain.ReservationRepository;
 import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
-import com.example.concertreservation.reservation.event.PaymentConfirmedDomainEvent;
-import com.example.concertreservation.reservation.event.PaymentConfirmedEvent;
 import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
 import com.example.concertreservation.user.domain.User;

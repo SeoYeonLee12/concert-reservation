@@ -1,4 +1,4 @@
-package com.example.concertreservation.reservation.event;
+package com.example.concertreservation.global.kafka.producer;
 
 import com.example.concertreservation.global.event.DomainEventRepository;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +17,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class PaymentEventListener {
 
-    static final String TOPIC = "payment.confirmed";
+    public static final String TOPIC = "payment.confirmed";
 
     private final DomainEventRepository domainEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
@@ -25,7 +25,7 @@ public class PaymentEventListener {
     /**
      * 결제 트랜잭션 커밋 이후 비동기로 Kafka에 이벤트 발행.
      * message key = DomainEvent.uuid → 컨슈머 Redis 멱등성 검사에 사용.
-     * 발행 성공 → PRODUCE_SUCCESS, 실패 → PRODUCE_FAIL (OutboxRetryScheduler 재처리 없음).
+     * 발행 성공 → PRODUCE_SUCCESS, 실패 → PRODUCE_FAIL.
      * INIT 상태로 남은 이벤트는 OutboxRetryScheduler가 30초 후 재처리.
      */
     @Async("EVENT_ASYNC_TASK_EXECUTOR")

@@ -1,4 +1,4 @@
-package com.example.concertreservation.global.event;
+package com.example.concertreservation.global.kafka.deadletter;
 
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,10 +1,11 @@
 package com.example.concertreservation.reservation.event;
 
-import com.example.concertreservation.global.event.DeadLetter;
-import com.example.concertreservation.global.event.DeadLetterRepository;
 import com.example.concertreservation.global.event.DomainEvent;
 import com.example.concertreservation.global.event.DomainEventRepository;
 import com.example.concertreservation.global.event.EventStatus;
+import com.example.concertreservation.global.kafka.deadletter.DeadLetter;
+import com.example.concertreservation.global.kafka.deadletter.DeadLetterRepository;
+import com.example.concertreservation.global.kafka.producer.PaymentConfirmedDomainEvent;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;

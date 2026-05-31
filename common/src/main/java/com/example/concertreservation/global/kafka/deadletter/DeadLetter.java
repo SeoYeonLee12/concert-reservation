@@ -1,4 +1,4 @@
-package com.example.concertreservation.global.event;
+package com.example.concertreservation.global.kafka.deadletter;
 
 import com.example.concertreservation.global.domain.SoftDeletedDomain;
 import jakarta.persistence.Column;

@@ -1,10 +1,9 @@
-package com.example.concertreservation.reservation.event;
+package com.example.concertreservation.global.kafka.consumer;
 
-import java.time.Duration;
+import com.example.concertreservation.global.kafka.producer.PaymentEventListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PaymentKafkaConsumer {
 
-    private static final String IDEMPOTENT_KEY_PREFIX = "kafka:idempotent:payment:";
-    private static final Duration IDEMPOTENT_TTL = Duration.ofHours(24);
-
-    private final StringRedisTemplate stringRedisTemplate;
+    private final KafkaIdempotencyChecker idempotencyChecker;
 
     @KafkaListener(
             topics = PaymentEventListener.TOPIC,
@@ -25,12 +21,8 @@ public class PaymentKafkaConsumer {
     )
     public void consume(ConsumerRecord<String, String> record) {
         String uuid = record.key();
-        String idempotentKey = IDEMPOTENT_KEY_PREFIX + uuid;
 
-        Boolean isNew = stringRedisTemplate.opsForValue()
-                .setIfAbsent(idempotentKey, "1", IDEMPOTENT_TTL);
-
-        if (Boolean.FALSE.equals(isNew)) {
+        if (idempotencyChecker.isDuplicate(uuid)) {
             log.warn("[Kafka 중복 수신 무시] uuid={}, offset={}", uuid, record.offset());
             return;
         }

@@ -1,4 +1,4 @@
-package com.example.concertreservation.reservation.event;
+package com.example.concertreservation.global.kafka.producer;
 
 import com.example.concertreservation.global.event.DomainEvent;
 import jakarta.persistence.Column;
