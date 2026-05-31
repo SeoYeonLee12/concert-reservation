@@ -44,6 +44,8 @@ public abstract class DomainEvent extends SoftDeletedDomain {
 
     private String failReason;
 
+    private int retryCount;
+
     protected DomainEvent(Long targetDomainId) {
         this.uuid = UUID.randomUUID().toString();
         this.status = EventStatus.INIT;
@@ -61,6 +63,14 @@ public abstract class DomainEvent extends SoftDeletedDomain {
     public void produceFail(Throwable e) {
         this.status = EventStatus.PRODUCE_FAIL;
         this.failReason = e.getMessage();
+    }
+
+    public void increaseRetryCount() {
+        this.retryCount++;
+    }
+
+    public void abandon() {
+        this.status = EventStatus.ABANDONED;
     }
 
     public abstract String getTopic();

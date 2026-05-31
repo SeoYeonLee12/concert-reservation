@@ -4,5 +4,6 @@ public enum EventStatus {
     INIT,
     PRODUCE_SUCCESS,
     PRODUCE_FAIL,
+    ABANDONED,
     ;
 }
