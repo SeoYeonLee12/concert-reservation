@@ -10,9 +10,9 @@
 |------|------|
 | 현재 브랜치 | `feat/kafka-domain-event-uuid-idempotency` |
 | 베이스 브랜치 | `main` (dd47a1c — 비관적 락 전략 추가) |
-| 최신 커밋 | `001e175` — Kafka I/O를 global/kafka 패키지로 재배치 |
+| 최신 커밋 | `aab2f6d` — @RetryableTopic + KafkaConfig 역할 분리 |
 | PR | #8 Ready for review → main |
-| 다음 작업 | **DB 마이그레이션 실행(08) → PR #8 머지** |
+| 다음 작업 | **PR #8 머지** |
 
 ### 완료된 구현 목록
 
@@ -98,8 +98,8 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-2.md  ← 가장 최근
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01.md
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-3.md  ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-2.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-29.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22-2.md
 ```
