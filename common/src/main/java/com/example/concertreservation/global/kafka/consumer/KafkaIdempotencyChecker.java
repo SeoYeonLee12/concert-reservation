@@ -15,11 +15,16 @@ public class KafkaIdempotencyChecker {
     private final StringRedisTemplate stringRedisTemplate;
 
     /**
-     * uuid를 Redis에 SETNX로 기록. 이미 처리된 uuid면 true 반환 (중복).
+     * uuid가 이미 처리되었는지 확인 (Redis 키 존재 여부).
      */
-    public boolean isDuplicate(String uuid) {
-        String key = IDEMPOTENT_KEY_PREFIX + uuid;
-        Boolean isNew = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", IDEMPOTENT_TTL);
-        return Boolean.FALSE.equals(isNew);
+    public boolean isAlreadyProcessed(String uuid) {
+        return Boolean.TRUE.equals(stringRedisTemplate.hasKey(IDEMPOTENT_KEY_PREFIX + uuid));
+    }
+
+    /**
+     * uuid를 처리됨으로 표시 (Redis에 기록).
+     */
+    public void markAsProcessed(String uuid) {
+        stringRedisTemplate.opsForValue().set(IDEMPOTENT_KEY_PREFIX + uuid, "1", IDEMPOTENT_TTL);
     }
 }
