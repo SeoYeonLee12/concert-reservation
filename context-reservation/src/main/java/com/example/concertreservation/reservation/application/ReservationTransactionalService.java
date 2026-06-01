@@ -1,7 +1,9 @@
 package com.example.concertreservation.reservation.application;
 
-import com.example.concertreservation.global.outbox.OutboxEvent;
-import com.example.concertreservation.global.outbox.OutboxEventRepository;
+import com.example.concertreservation.global.event.DomainEvent;
+import com.example.concertreservation.global.event.DomainEventRepository;
+import com.example.concertreservation.global.kafka.producer.PaymentConfirmedDomainEvent;
+import com.example.concertreservation.global.kafka.producer.PaymentConfirmedEvent;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeat;
 import com.example.concertreservation.performanceseat.domain.PerformanceSeatRepository;
 import com.example.concertreservation.pointHistory.domain.PointHistory;
@@ -9,7 +11,6 @@ import com.example.concertreservation.pointHistory.domain.PointHistoryRepository
 import com.example.concertreservation.reservation.domain.Reservation;
 import com.example.concertreservation.reservation.domain.ReservationRepository;
 import com.example.concertreservation.reservation.domain.enums.ReservationStatus;
-import com.example.concertreservation.reservation.event.PaymentConfirmedEvent;
 import com.example.concertreservation.global.error.errorcode.ReservationErrorCode;
 import com.example.concertreservation.global.error.exception.GlobalException;
 import com.example.concertreservation.user.domain.User;
@@ -33,7 +34,7 @@ public class ReservationTransactionalService {
     private final PerformanceSeatRepository performanceSeatRepository;
     private final UserRepository userRepository;
     private final PointHistoryRepository pointHistoryRepository;
-    private final OutboxEventRepository outboxEventRepository;
+    private final DomainEventRepository domainEventRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -50,6 +51,22 @@ public class ReservationTransactionalService {
         return reservation.getReservationId();
     }
 
+    // 비관적 락 전용. SELECT FOR UPDATE로 락 획득 → 트랜잭션 커밋 시 자동 해제.
+    @Transactional
+    public Long doReserveWithPessimisticLock(Long userId, Long performanceSeatId) {
+        userRepository.getUserById(userId);
+        PerformanceSeat seat = performanceSeatRepository.getByPerformanceSeatIdWithPessimisticLock(performanceSeatId);
+        seat.tryReserve(LocalDateTime.now());
+        Reservation reservation = new Reservation(
+                userId, performanceSeatId, ReservationStatus.PENDING, seat.getPrice());
+        reservationRepository.save(reservation);
+        return reservation.getReservationId();
+    }
+
+    /**
+     * 결제 확정: 비즈니스 로직 + DomainEvent 저장 + Spring 이벤트 발행을 단일 트랜잭션으로 처리.
+     * 커밋 성공 후 PaymentEventListener가 비동기로 Kafka에 발행.
+     */
     @Transactional
     public void doConfirmPayment(Long userId, Long reservationId) {
         User user = userRepository.findByUsersIdForUpdate(userId);
@@ -68,14 +85,11 @@ public class ReservationTransactionalService {
         pointHistoryRepository.save(
                 PointHistory.useHistory(user, reservationId, (long) reservation.getPrice(), user.getPoint()));
 
-        String payload = String.format(
-                "{\"userId\":%d,\"reservationId\":%d,\"price\":%d}",
-                userId, reservationId, reservation.getPrice());
-        OutboxEvent outboxEvent = outboxEventRepository.save(
-                OutboxEvent.pending("PAYMENT_CONFIRMED", "RESERVATION", reservationId, payload));
+        DomainEvent domainEvent = domainEventRepository.save(
+                PaymentConfirmedDomainEvent.of(reservationId, userId, reservation.getPrice()));
 
         eventPublisher.publishEvent(
-                new PaymentConfirmedEvent(outboxEvent.getId(), userId, reservationId, reservation.getPrice()));
+                new PaymentConfirmedEvent(domainEvent.getId(), domainEvent.getUuid(), userId, reservationId, reservation.getPrice()));
     }
 
     @Transactional
