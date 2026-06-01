@@ -10,7 +10,7 @@
 |------|------|
 | 현재 브랜치 | `feat/kafka-domain-event-uuid-idempotency` |
 | 베이스 브랜치 | `main` (dd47a1c — 비관적 락 전략 추가) |
-| 최신 커밋 | `8441c89` — Outbox 재처리 개선 (PRODUCE_FAIL + DeadLetter) |
+| 최신 커밋 | `001e175` — Kafka I/O를 global/kafka 패키지로 재배치 |
 | PR | #8 Ready for review → main |
 | 다음 작업 | **DB 마이그레이션 실행(08) → PR #8 머지** |
 
@@ -98,7 +98,8 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01.md   ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-2.md  ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-29.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22-2.md
 ```
@@ -129,9 +130,10 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 | `context-reservation/src/main/java/.../waiting/domain/WaitingQueue.java` | 대기열 상태 기계 |
 | `context-catalog/src/main/java/.../performanceseat/domain/PerformanceSeat.java` | @Version 필드 |
 | `common/src/main/java/.../global/event/DomainEvent.java` | Outbox 추상 엔티티 (SINGLE_TABLE + UUID) |
-| `context-reservation/src/main/java/.../reservation/event/PaymentConfirmedDomainEvent.java` | DomainEvent 구현체 |
-| `context-reservation/src/main/java/.../reservation/event/PaymentEventListener.java` | @Async Kafka 발행 (AFTER_COMMIT) |
-| `context-reservation/src/main/java/.../reservation/event/PaymentKafkaConsumer.java` | UUID 기반 Redis 멱등성 |
+| `common/src/main/java/.../global/kafka/producer/PaymentConfirmedDomainEvent.java` | DomainEvent 구현체 |
+| `common/src/main/java/.../global/kafka/producer/PaymentEventListener.java` | @Async Kafka 발행 (AFTER_COMMIT) |
+| `common/src/main/java/.../global/kafka/consumer/KafkaIdempotencyChecker.java` | Redis SETNX 멱등성 검사 |
+| `common/src/main/java/.../global/kafka/consumer/PaymentKafkaConsumer.java` | UUID 기반 Kafka 소비 |
 | `common/src/main/java/.../global/config/AsyncConfig.java` | EVENT_ASYNC_TASK_EXECUTOR 설정 |
 
 ---
