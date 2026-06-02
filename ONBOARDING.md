@@ -8,11 +8,10 @@
 
 | 항목 | 상태 |
 |------|------|
-| 현재 브랜치 | `feat/hikari-named-lock-fix` |
-| 베이스 브랜치 | `develop` |
-| 최신 커밋 | `c9829c7` — HikariCP Named Lock 풀 고갈 구조 개선 |
+| 현재 브랜치 | `feat/kafka-monitoring` |
 | PR #8 | ✅ main 머지 완료 (feat/kafka-domain-event-uuid-idempotency) |
-| 다음 작업 | **PR feat/hikari-named-lock-fix → develop** |
+| PR #9 | ✅ develop 머지 완료 (feat/hikari-named-lock-fix) |
+| 다음 작업 | Wave 4/6 k6 재측정 → 포트폴리오 문서 → PR |
 
 ### 완료된 구현 목록
 
@@ -29,6 +28,8 @@
 | 2026-05-29 | **DomainEvent 추상화 + UUID 멱등성 키 + 비동기 Kafka 발행** |
 | 2026-06-01 세션1~3 | **Outbox 재처리 개선: PRODUCE_FAIL 재처리 + retryCount + ABANDONED + DeadLetter** |
 | 2026-06-01 세션4~5 | **HikariCP Named Lock 풀 고갈 구조 개선: DataSource 분리 + Semaphore(4, fair)** |
+| 2026-06-02 세션5 | **k6 실측 완료 + PR #9 머지 + 이력서 초안 작성 (대기 큐 + HikariCP 개선)** |
+| 2026-06-02 세션6 | **Kafka 모니터링(kafbat/kafka-ui) + 기준선 측정 + 개선 구현(lz4+partition3+concurrency3)** |
 
 ---
 
@@ -99,7 +100,9 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-4.md  ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-2.md   ← 가장 최근 (세션6: Kafka 모니터링)
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02.md     ← 세션5: HikariCP k6 + 이력서
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-4.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-3.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-29.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22-2.md
@@ -175,13 +178,32 @@ concert-reservation/
 
 ## 7. 미완료 작업
 
-### 우선순위 1: PR 머지
+### 우선순위 1: Wave 4/6 k6 재측정 (feat/kafka-monitoring 브랜치)
 ```bash
-# feat/hikari-named-lock-fix → develop
-# 커밋: c9829c7 (HikariCP Named Lock 풀 고갈 구조 개선)
+# 신선한 좌석 ID 조회 (ID > 203)
+docker exec concert-reservation-db mysql -uconcert-reservation-user -p123 \
+  concert-reservation-db \
+  -e "SELECT performance_seat_id FROM performance_seat WHERE status='AVAILABLE' AND performance_seat_id > 203 LIMIT 110;"
+
+# AVAILABLE_SEAT_IDS 업데이트 후 실행
+# Wave 4: 프로듀서 개선 후 측정 (lz4)
+docker run --rm -v $(pwd)/test/k6-scripts:/scripts -e VU_COUNT=50 grafana/k6 run /scripts/kafka-producer-baseline-test.js
+
+# Wave 6: 컨슈머 개선 후 측정 (partition=3, concurrency=3)
+docker run --rm -v $(pwd)/test/k6-scripts:/scripts -e VU_COUNT=100 grafana/k6 run /scripts/kafka-consumer-lag-test.js
 ```
 
-### 우선순위 2: Task 3 — 전체 파일 상세 문서화 (미착수)
+### 우선순위 2: 포트폴리오 문서 + 이력서
+```
+decisions/023-kafka-monitoring-and-performance.md 작성
+```
+
+### 우선순위 3: PR 생성
+```
+feat/kafka-monitoring → develop
+```
+
+### 우선순위 4: Task 3 — 전체 파일 상세 문서화 (미착수)
 
 각 파일에 대해 아래 3가지를 기록:
 1. **무엇을 하는 파일인가** — 한 줄 요약
