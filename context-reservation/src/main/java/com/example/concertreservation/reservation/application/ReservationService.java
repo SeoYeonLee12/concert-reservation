@@ -33,7 +33,8 @@ public class ReservationService {
 
     public void confirmPayment(Long userId, Long reservationId) {
         stringRedisTemplate.opsForValue()
-                .set(ReservationAsyncService.STATUS_KEY_PREFIX + reservationId, "PENDING", 10, TimeUnit.MINUTES);
+                .set(ReservationAsyncService.STATUS_KEY_PREFIX + reservationId, "PENDING",
+                        ReservationAsyncService.STATUS_TTL_MINUTES, TimeUnit.MINUTES);
         reservationAsyncService.confirmAsync(userId, reservationId);
     }
 

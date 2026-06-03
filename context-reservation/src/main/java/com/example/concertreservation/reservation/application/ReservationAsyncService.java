@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class ReservationAsyncService {
 
     public static final String STATUS_KEY_PREFIX = "confirm:status:";
-    private static final long STATUS_TTL_MINUTES = 10;
+    static final long STATUS_TTL_MINUTES = 10;
 
     private final ReservationTransactionalService reservationTransactionalService;
     private final StringRedisTemplate stringRedisTemplate;
