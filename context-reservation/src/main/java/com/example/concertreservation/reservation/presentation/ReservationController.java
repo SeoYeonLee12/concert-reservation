@@ -2,6 +2,7 @@ package com.example.concertreservation.reservation.presentation;
 
 import com.example.concertreservation.auth.Auth;
 import com.example.concertreservation.reservation.application.ReservationService;
+import com.example.concertreservation.reservation.presentation.dto.ConfirmStatusResponse;
 import com.example.concertreservation.reservation.presentation.dto.ReservationCreateRequest;
 import com.example.concertreservation.reservation.presentation.dto.ReservationCreateResponse;
 import jakarta.validation.Valid;
@@ -9,11 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequiredArgsConstructor
@@ -43,7 +46,17 @@ public class ReservationController {
             @PathVariable Long reservationId
     ) {
         reservationService.confirmPayment(userId, reservationId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.accepted().build();
+    }
+
+    @ResponseBody
+    @GetMapping("/{reservationId}/confirm/status")
+    public ResponseEntity<ConfirmStatusResponse> getConfirmStatus(
+            @Auth Long userId,
+            @PathVariable Long reservationId
+    ) {
+        String status = reservationService.getConfirmStatus(reservationId);
+        return ResponseEntity.ok(new ConfirmStatusResponse(reservationId, status));
     }
 
     @PostMapping("/{reservationId}/cancel")

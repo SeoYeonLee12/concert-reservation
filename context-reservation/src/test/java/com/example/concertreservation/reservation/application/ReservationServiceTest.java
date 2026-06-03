@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
  * ReservationService 단위 테스트 — 전략 라우팅 동작에 집중.
@@ -30,7 +31,9 @@ class ReservationServiceTest {
     @Mock private ReservationLockStrategy optimisticStrategy;
     @Mock private ReservationLockStrategy pessimisticStrategy;
     @Mock private ReservationTransactionalService reservationTransactionalService;
+    @Mock private ReservationAsyncService reservationAsyncService;
     @Mock private WaitingQueueService waitingQueueService;
+    @Mock private StringRedisTemplate stringRedisTemplate;
 
     private ReservationService reservationService;
 
@@ -42,7 +45,9 @@ class ReservationServiceTest {
                 "optimistic", optimisticStrategy,
                 "pessimistic", pessimisticStrategy
         );
-        reservationService = new ReservationService(strategies, reservationTransactionalService, waitingQueueService);
+        reservationService = new ReservationService(
+                strategies, reservationTransactionalService, reservationAsyncService,
+                waitingQueueService, stringRedisTemplate);
     }
 
     @Test
