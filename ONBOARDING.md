@@ -8,11 +8,11 @@
 
 | 항목 | 상태 |
 |------|------|
-| 현재 브랜치 | `feat/hikari-named-lock-fix` |
-| 베이스 브랜치 | `develop` |
-| 최신 커밋 | `c9829c7` — HikariCP Named Lock 풀 고갈 구조 개선 |
+| 현재 브랜치 | `feat/kafka-monitoring` |
 | PR #8 | ✅ main 머지 완료 (feat/kafka-domain-event-uuid-idempotency) |
-| 다음 작업 | **PR feat/hikari-named-lock-fix → develop** |
+| PR #9 | ✅ develop 머지 완료 (feat/hikari-named-lock-fix) |
+| PR #10 | ✅ feat/kafka-monitoring → develop (열려있음) |
+| 다음 작업 | lz4 설정 재검토 (현재 구조에서 역효과) → PR #10 머지 |
 
 ### 완료된 구현 목록
 
@@ -29,6 +29,12 @@
 | 2026-05-29 | **DomainEvent 추상화 + UUID 멱등성 키 + 비동기 Kafka 발행** |
 | 2026-06-01 세션1~3 | **Outbox 재처리 개선: PRODUCE_FAIL 재처리 + retryCount + ABANDONED + DeadLetter** |
 | 2026-06-01 세션4~5 | **HikariCP Named Lock 풀 고갈 구조 개선: DataSource 분리 + Semaphore(4, fair)** |
+| 2026-06-02 세션5 | **k6 실측 완료 + PR #9 머지 + 이력서 초안 작성 (대기 큐 + HikariCP 개선)** |
+| 2026-06-02 세션6 | **Kafka 모니터링(kafbat/kafka-ui) + 기준선 측정 + 개선 구현(lz4+partition3+concurrency3)** |
+| 2026-06-02 세션7 | **lz4 실측(kafka-dump-log.sh): 단일 배치 +4.2% 오버헤드. consumer=Redis 전용(DataSource 분리 불필요). 023 문서 전면 수정** |
+| 2026-06-03 세션8 | **lz4 제거(count=1 배치 구조에서 역효과). fetch.max.wait.ms 제거(fetch.min.bytes=1 기본값으로 발동 안 함). 이력서 글 작성(모니터링→병목→개선 흐름)** |
+| 2026-06-03 세션9 | **이력서 글 다듬기(파티션/컨슈머 관계 정정, timeout 원인 분리 및 개선 방향 추가). HikariCP pool 고갈 근본 분석. confirm 비동기 처리(202+폴링) 설계 인터뷰 완료** |
+| 2026-06-03 세션10 | **confirm 비동기 구현 완료(ReservationAsyncService + 202 + Redis 폴링). k6 100VU 실증: 202 Accepted 100/100, COMPLETED 100/100, 에러 0건, p95=1,985ms. 풀 분리 불필요 확인** |
 
 ---
 
@@ -99,7 +105,13 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-4.md  ← 가장 최근
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-03-3.md    ← 가장 최근 (세션10: confirm 비동기 구현 완료 + k6 100VU 실증)
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-03-2.md    ← 세션9: 이력서 글 다듬기 + confirm 비동기 설계 인터뷰
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-03.md     ← 세션8: lz4·fetch.max.wait.ms 제거 + 이력서 글
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-3.md   ← 세션7: lz4 실측 + 023 문서 수정
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-2.md   ← 세션6: Kafka 모니터링
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02.md     ← 세션5: HikariCP k6 + 이력서
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-4.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-3.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-29.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-05-22-2.md
@@ -175,13 +187,25 @@ concert-reservation/
 
 ## 7. 미완료 작업
 
-### 우선순위 1: PR 머지
-```bash
-# feat/hikari-named-lock-fix → develop
-# 커밋: c9829c7 (HikariCP Named Lock 풀 고갈 구조 개선)
+### ✅ 완료: confirm 비동기 구현 (세션10)
+
+202 Accepted + Redis 폴링 구현 완료. k6 100VU: 에러 0건, p95=1,985ms.
+풀 분리 불필요 (EVENT_ASYNC_TASK_EXECUTOR max=4 그대로 사용).
+커밋: 486b753, 0eeb369
+
+### 우선순위 1: 포트폴리오 글 파일 저장
+
+- `kafka-monitoring.md` (세션8-9 확정본): `/Users/sylee/Documents/concert-reservation-portfolio/resume/kafka-monitoring.md` — 아직 미저장
+- `confirm-async-polling.md`: `/Users/sylee/Documents/concert-reservation-portfolio/resume/confirm-async-polling.md` — ✅ 저장 완료 (세션10)
+- `decisions/024-confirm-async-polling.md` — ✅ 저장 완료 (세션10)
+
+### 우선순위 2: PR #10 머지
+```
+feat/kafka-monitoring → develop (PR #10 열려있음)
+포함 커밋: cdcbe61, 8232ad7, cc80af0, 8c8b888, ae526a0, 486b753, 0eeb369
 ```
 
-### 우선순위 2: Task 3 — 전체 파일 상세 문서화 (미착수)
+### 우선순위 3: Task 3 — 전체 파일 상세 문서화 (미착수)
 
 각 파일에 대해 아래 3가지를 기록:
 1. **무엇을 하는 파일인가** — 한 줄 요약
