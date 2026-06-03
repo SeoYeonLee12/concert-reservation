@@ -11,7 +11,8 @@
 | 현재 브랜치 | `feat/kafka-monitoring` |
 | PR #8 | ✅ main 머지 완료 (feat/kafka-domain-event-uuid-idempotency) |
 | PR #9 | ✅ develop 머지 완료 (feat/hikari-named-lock-fix) |
-| 다음 작업 | Wave 4/6 k6 재측정 → 포트폴리오 문서 → PR |
+| PR #10 | ✅ feat/kafka-monitoring → develop (열려있음) |
+| 다음 작업 | lz4 설정 재검토 (현재 구조에서 역효과) → PR #10 머지 |
 
 ### 완료된 구현 목록
 
@@ -30,6 +31,7 @@
 | 2026-06-01 세션4~5 | **HikariCP Named Lock 풀 고갈 구조 개선: DataSource 분리 + Semaphore(4, fair)** |
 | 2026-06-02 세션5 | **k6 실측 완료 + PR #9 머지 + 이력서 초안 작성 (대기 큐 + HikariCP 개선)** |
 | 2026-06-02 세션6 | **Kafka 모니터링(kafbat/kafka-ui) + 기준선 측정 + 개선 구현(lz4+partition3+concurrency3)** |
+| 2026-06-02 세션7 | **lz4 실측(kafka-dump-log.sh): 단일 배치 +4.2% 오버헤드. consumer=Redis 전용(DataSource 분리 불필요). 023 문서 전면 수정** |
 
 ---
 
@@ -178,32 +180,18 @@ concert-reservation/
 
 ## 7. 미완료 작업
 
-### 우선순위 1: Wave 4/6 k6 재측정 (feat/kafka-monitoring 브랜치)
-```bash
-# 신선한 좌석 ID 조회 (ID > 203)
-docker exec concert-reservation-db mysql -uconcert-reservation-user -p123 \
-  concert-reservation-db \
-  -e "SELECT performance_seat_id FROM performance_seat WHERE status='AVAILABLE' AND performance_seat_id > 203 LIMIT 110;"
+### 우선순위 1: lz4 설정 재검토 (선택 사항)
 
-# AVAILABLE_SEAT_IDS 업데이트 후 실행
-# Wave 4: 프로듀서 개선 후 측정 (lz4)
-docker run --rm -v $(pwd)/test/k6-scripts:/scripts -e VU_COUNT=50 grafana/k6 run /scripts/kafka-producer-baseline-test.js
+현재 `compression.type=lz4` 설정은 단일 메시지 배치 구조에서 **+4.2% 오버헤드** 발생 (실측).
+- 제거 옵션: `COMPRESSION_TYPE_CONFIG` 삭제 → 코드 단순화
+- 유지 옵션: 향후 `linger.ms > 0` + 비동기 발행 전환 시 효과 발생
 
-# Wave 6: 컨슈머 개선 후 측정 (partition=3, concurrency=3)
-docker run --rm -v $(pwd)/test/k6-scripts:/scripts -e VU_COUNT=100 grafana/k6 run /scripts/kafka-consumer-lag-test.js
+### 우선순위 2: PR #10 머지
+```
+feat/kafka-monitoring → develop (PR #10 열려있음)
 ```
 
-### 우선순위 2: 포트폴리오 문서 + 이력서
-```
-decisions/023-kafka-monitoring-and-performance.md 작성
-```
-
-### 우선순위 3: PR 생성
-```
-feat/kafka-monitoring → develop
-```
-
-### 우선순위 4: Task 3 — 전체 파일 상세 문서화 (미착수)
+### 우선순위 3: Task 3 — 전체 파일 상세 문서화 (미착수)
 
 각 파일에 대해 아래 3가지를 기록:
 1. **무엇을 하는 파일인가** — 한 줄 요약
