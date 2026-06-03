@@ -32,6 +32,7 @@
 | 2026-06-02 세션5 | **k6 실측 완료 + PR #9 머지 + 이력서 초안 작성 (대기 큐 + HikariCP 개선)** |
 | 2026-06-02 세션6 | **Kafka 모니터링(kafbat/kafka-ui) + 기준선 측정 + 개선 구현(lz4+partition3+concurrency3)** |
 | 2026-06-02 세션7 | **lz4 실측(kafka-dump-log.sh): 단일 배치 +4.2% 오버헤드. consumer=Redis 전용(DataSource 분리 불필요). 023 문서 전면 수정** |
+| 2026-06-03 세션8 | **lz4 제거(count=1 배치 구조에서 역효과). fetch.max.wait.ms 제거(fetch.min.bytes=1 기본값으로 발동 안 함). 이력서 글 작성(모니터링→병목→개선 흐름)** |
 
 ---
 
@@ -102,7 +103,9 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-2.md   ← 가장 최근 (세션6: Kafka 모니터링)
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-03.md     ← 가장 최근 (세션8: lz4·fetch.max.wait.ms 제거 + 이력서 글)
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-3.md   ← 세션7: lz4 실측 + 023 문서 수정
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-2.md   ← 세션6: Kafka 모니터링
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02.md     ← 세션5: HikariCP k6 + 이력서
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-4.md
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-01-3.md
@@ -180,15 +183,15 @@ concert-reservation/
 
 ## 7. 미완료 작업
 
-### 우선순위 1: lz4 설정 재검토 (선택 사항)
+### 우선순위 1: 포트폴리오 글 파일 저장 (미저장)
 
-현재 `compression.type=lz4` 설정은 단일 메시지 배치 구조에서 **+4.2% 오버헤드** 발생 (실측).
-- 제거 옵션: `COMPRESSION_TYPE_CONFIG` 삭제 → 코드 단순화
-- 유지 옵션: 향후 `linger.ms > 0` + 비동기 발행 전환 시 효과 발생
+세션8에서 작성한 타입1(요약)/타입2(상세) 이력서 글이 채팅에만 있고 파일 미저장.
+저장 경로: `/Users/sylee/Documents/concert-reservation-portfolio/resume/kafka-monitoring.md`
 
 ### 우선순위 2: PR #10 머지
 ```
 feat/kafka-monitoring → develop (PR #10 열려있음)
+포함 커밋: cdcbe61, 8232ad7, cc80af0
 ```
 
 ### 우선순위 3: Task 3 — 전체 파일 상세 문서화 (미착수)
