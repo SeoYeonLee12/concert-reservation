@@ -33,6 +33,7 @@
 | 2026-06-02 세션6 | **Kafka 모니터링(kafbat/kafka-ui) + 기준선 측정 + 개선 구현(lz4+partition3+concurrency3)** |
 | 2026-06-02 세션7 | **lz4 실측(kafka-dump-log.sh): 단일 배치 +4.2% 오버헤드. consumer=Redis 전용(DataSource 분리 불필요). 023 문서 전면 수정** |
 | 2026-06-03 세션8 | **lz4 제거(count=1 배치 구조에서 역효과). fetch.max.wait.ms 제거(fetch.min.bytes=1 기본값으로 발동 안 함). 이력서 글 작성(모니터링→병목→개선 흐름)** |
+| 2026-06-03 세션9 | **이력서 글 다듬기(파티션/컨슈머 관계 정정, timeout 원인 분리 및 개선 방향 추가). HikariCP pool 고갈 근본 분석. confirm 비동기 처리(202+폴링) 설계 인터뷰 완료** |
 
 ---
 
@@ -103,7 +104,8 @@ docker run --rm -v $(pwd)/test/k6-scripts:/scripts \
 
 ### Step 1: 최근 세션 파악
 ```
-/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-03.md     ← 가장 최근 (세션8: lz4·fetch.max.wait.ms 제거 + 이력서 글)
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-03-2.md    ← 가장 최근 (세션9: 이력서 글 다듬기 + confirm 비동기 설계 인터뷰)
+/Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-03.md     ← 세션8: lz4·fetch.max.wait.ms 제거 + 이력서 글
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-3.md   ← 세션7: lz4 실측 + 023 문서 수정
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02-2.md   ← 세션6: Kafka 모니터링
 /Users/sylee/Documents/concert-reservation-portfolio/HANDOFF-2026-06-02.md     ← 세션5: HikariCP k6 + 이력서
@@ -183,18 +185,32 @@ concert-reservation/
 
 ## 7. 미완료 작업
 
-### 우선순위 1: 포트폴리오 글 파일 저장 (미저장)
+### 우선순위 1: 스레드풀 결정 후 confirm 비동기 구현 착수
 
-세션8에서 작성한 타입1(요약)/타입2(상세) 이력서 글이 채팅에만 있고 파일 미저장.
+confirm 비동기 처리(202 Accepted + 폴링) 인터뷰 완료. 구현 전 스레드풀 결정 필요.
+
+**데드락 위험**: EVENT_ASYNC_TASK_EXECUTOR(max=4) 공유 시
+- confirm @Async 4개 → 스레드 전부 점유
+- 트랜잭션 커밋 → PaymentEventListener도 동일 executor 요청
+- .get(10s) 대기 중 → 데드락
+
+**권고**: CONFIRM_ASYNC_EXECUTOR 전용 신설 (corePool=50, max=100)
+
+ralplan 드래프트: `.claude/plans/drafts/confirm-async-polling.md`
+
+### 우선순위 2: 포트폴리오 글 파일 저장
+
+세션9에서 확정한 타입1/타입2 이력서 글이 채팅에만 있음.
 저장 경로: `/Users/sylee/Documents/concert-reservation-portfolio/resume/kafka-monitoring.md`
+포함 내용: timeout 원인 분리 섹션 + HikariCP 개선 방향 포함
 
-### 우선순위 2: PR #10 머지
+### 우선순위 3: PR #10 머지
 ```
 feat/kafka-monitoring → develop (PR #10 열려있음)
-포함 커밋: cdcbe61, 8232ad7, cc80af0
+포함 커밋: cdcbe61, 8232ad7, cc80af0, 8c8b888
 ```
 
-### 우선순위 3: Task 3 — 전체 파일 상세 문서화 (미착수)
+### 우선순위 4: Task 3 — 전체 파일 상세 문서화 (미착수)
 
 각 파일에 대해 아래 3가지를 기록:
 1. **무엇을 하는 파일인가** — 한 줄 요약
